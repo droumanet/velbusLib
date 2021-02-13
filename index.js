@@ -1,6 +1,7 @@
 let http = require('http');
-let io = require("socket.io");
+//let io = require("socket.io");
 let net = require("net");
+let traitement = require('./controllers/traitement.js');
 
 let host = "192.168.168.248";
 let port = 8445;
@@ -11,7 +12,8 @@ let connexion = () => {
 client.connect(port, host, connexion);
 
 client.on('data', (data) => {
-    console.log("DATA: "+data);
+    let d = traitement.enHexa(data);
+    console.log("DATA: "+d);
 });
 client.on('close', ()  => {
     console.log("CLOSING CONNEXION");
@@ -27,4 +29,4 @@ let server = http.createServer(function(request, response){
 
 // Le serveur écoute les requêtes http sur le port 8001 mais aussi les requêtes "socket"
 server.listen(8001);
-io.listen(server);
+// io.listen(server);
