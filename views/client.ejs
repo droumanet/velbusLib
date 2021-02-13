@@ -5,9 +5,26 @@
   </head>
   <body>
     <script>
+      let nbMsg = 5;
+      let tableMsg = [];
+      function listerMsg() {
+        let texte = "";
+        for (let i=0; i < tableMsg.length; i++) {
+          texte = texte + tableMsg[i] + "<br>\n";
+        }
+        return texte;
+      }
+
       var socket = io.connect();
-      socket.on('news', (msg) => console.log(msg))
+      socket.on('news', (msg) => {
+        console.log(msg);
+        tableMsg.push(msg);
+        if (tableMsg.length > nbMsg) tableMsg.shift();
+        document.getElementById('VelbusMsg').innerHTML = listerMsg()
+      })
     </script>
     <div>This is our socket.html file</div>
+    <div id="VelbusMsg">aucun message Velbus</div>
+    <div>FIN</div>
   </body>
 </html>
