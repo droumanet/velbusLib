@@ -2,6 +2,7 @@ let http = require('http');
 //let io = require("socket.io");
 let net = require("net");
 let traitement = require('./controllers/traitement.js');
+let velbus = require('./controllers/velbuslib.js');
 
 let host = "192.168.168.248";
 let port = 8445;
@@ -13,7 +14,8 @@ client.connect(port, host, connexion);
 
 client.on('data', (data) => {
     let d = traitement.enHexa(data);
-    console.log("DATA: "+d);
+    let crc = velbus.CheckSum(data);
+    console.log("DATA: "+d+" CRC:"+crc.toString(16));
 });
 client.on('close', ()  => {
     console.log("CLOSING CONNEXION");
