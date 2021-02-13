@@ -1,10 +1,12 @@
 <html>
   <head>
     <script src="/socket.io/socket.io.js"></script>
+    <title>Socket client</title>
   </head>
   <body>
     <script>
       var socket = io.connect();
+      socket.on('news', (msg) => console.log(msg))
     </script>
     <div>This is our socket.html file</div>
   </body>
