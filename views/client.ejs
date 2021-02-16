@@ -3,10 +3,20 @@
     <script src="/socket.io/socket.io.js"></script>
     <title>Socket client</title>
   </head>
+  <style>
+    #VelbusMsg {
+      border-color: black;
+      border-style: solid;
+    }
+  </style>
   <body>
     <script>
-      let nbMsg = 5;
-      let tableMsg = [];
+      // initialisation
+      var socket = io.connect();
+      let nbMsg = 15;
+      let tableMsg = ["","","","","","","","","","","","","","",""];
+
+      // Function to show only last nbMsg messages
       function listerMsg() {
         let texte = "";
         for (let i=0; i < tableMsg.length; i++) {
@@ -15,7 +25,17 @@
         return texte;
       }
 
-      var socket = io.connect();
+      // Fonction to send relayOn or relayOff
+      function AllumerLampe() {
+        let etat= document.getElementById("btLampe");
+        socket.emit('relay', etat.value);
+        if (etat.value == "ON") {
+          etat.value = "OFF";
+        } else {        
+          etat.value = "ON"
+        }
+      }
+      
       socket.on('news', (msg) => {
         console.log(msg);
         tableMsg.push(msg);
@@ -26,5 +46,6 @@
     <div>This is our socket.html file</div>
     <div id="VelbusMsg">aucun message Velbus</div>
     <div>FIN</div>
+    <input type="button" id="btLampe" value="ON" onclick="AllumerLampe()">
   </body>
 </html>

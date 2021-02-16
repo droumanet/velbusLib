@@ -3,7 +3,7 @@ const enHexa = (donnees) => {
     let dhex=[];
     for (let i=0; i < donnees.length; i++) {
         
-        c = donnees[i].toString(16);
+        c = donnees[i].toString(16).toUpperCase();
         if (c.length < 2) c='0'+c;
         dhex.push(c);
     }
