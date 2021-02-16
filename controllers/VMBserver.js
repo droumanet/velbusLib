@@ -7,6 +7,7 @@ let connexion = () => {
 client.connect(port, host, connexion);
 
 client.on('data', (data) => {
+    let tableMsg = velbus.split(data);
     let d = traitement.enHexa(data);
     let crc = velbus.CheckSum(data);
     console.log("DATA: "+d+" CRC:"+crc.toString(16));
