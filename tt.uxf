@@ -1,0 +1,21 @@
+<diagram program="umletino" version="14.4.0-SNAPSHOT"><zoom_level>10</zoom_level><element><id>UMLClass</id><coordinates><x>120</x><y>70</y><w>180</w><h>200</h></coordinates><panel_attributes>Chargeur
+--
+id (I-20)
+SerialNumber
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>540</x><y>270</y><w>120</w><h>140</h></coordinates><panel_attributes>puissanceChargeur
+--
+id
+Identifiant (07-20-70)
+descriptionType
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>540</x><y>50</y><w>120</w><h>140</h></coordinates><panel_attributes>TypeChargeur
+--
+id
+Identifiant (I ou E)
+descriptionType
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>290</x><y>100</y><w>270</w><h>80</h></coordinates><panel_attributes>lt=-
+m1=0..*
+m2=1
+posseder</panel_attributes><additional_attributes>10;50;250;10</additional_attributes></element><element><id>Relation</id><coordinates><x>290</x><y>220</y><w>270</w><h>120</h></coordinates><panel_attributes>lt=-
+m1=0..*
+m2=1
+avoir</panel_attributes><additional_attributes>10;10;250;100</additional_attributes></element></diagram>

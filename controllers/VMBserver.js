@@ -1,4 +1,6 @@
-let host = "192.168.168.248";
+// Manage connexion with a TCP Velbus server
+
+let host = "teo-tea.hd.free.fr";
 let port = 8445;
 let client = new net.Socket();
 let connexion = () => {

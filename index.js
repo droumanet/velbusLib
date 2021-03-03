@@ -15,7 +15,7 @@ let traitement = require('./controllers/traitement');
 let velbus = require('./controllers/velbuslib');
 
 // let VMBserver = require();
-let host = "192.168.168.248";
+let host = "teo-tea.hd.free.fr";
 let port = 8445;
 let client = new net.Socket();
 let connexion = () => {

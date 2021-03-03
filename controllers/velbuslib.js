@@ -15,44 +15,46 @@ const VMB_PrioLow = 0xFB;
 const VMB_PrioHi = 0xF8;
 
 //#region Modules constants
-const VMB8PB    = 0x01;        // 8 simple push buttons module
-const VMB1RY    = 0x02;        // 1 relay (with physical button) module
-const VMB1BL    = 0x03;        // 1 blind (with physical button) module
-const VMB6IN    = 0x05;        // 6 inputs module
-const VMB1DM    = 0x07;        // 1 dimmer (with physical button) module
-const VMB4RY    = 0x08;        // 4 relays (with physical buttons) module
-const VMB2BL    = 0x09;        // 2 blind (with physical button) module
-const VMB4PD    = 0x0B;        // 8 (2x4) push buttons with display module
-const VMB1TS    = 0x0C;        // 1 temperature sensor module
-const VMB1TH    = 0x0D;        // -never produced-
-const VMB1TC    = 0x0E;        // 1 temperature sensor module
-const VMB1LED   = 0x0F;        // 1 LED controller module
-const VMB4RYLD  = 0x10;        // 4 relays (common power source) module
-const VMB4RYNO  = 0x11;        // 4 relays module
-const VMB4DC    = 0x12;        // 4 channels controller (0..10v) module
-const VMBDME    = 0x14;        // 1 dimmer (electronic transformer load) module
-const VMBDMI    = 0x15;        // 1 dimmer (inductive load) module
-const VMB8PBU   = 0x16;        // 8 push buttons (different form factor) module
-const VMB6BPN   = 0x17;        // 6 push buttons (Niko compatible) module
-const VMB2PBAN  = 0x18;        // 2 push buttons (Niko compatible) module
-const VMB2PBN   = 0x18;        //     "     "     (same but different color)
-const VMB4RF    = 0x1A;        // 4 channels wireless remote module
-const VMB1RYNO  = 0x1B;        // 1 relay module
-const VMB1BLE   = 0x1C;        // 1 blind module
-const VMB2BLE   = 0x1D;        // 2 blind module
-const VMBGP1    = 0x1E;        // 1 push glass button module
-const VMBGP2    = 0x1F;        // 2 push glass button module
-const VMBGP4    = 0x20;        // 4 push glass button module
-const VMBGPTC	= 0x25;
-const VMBGPOD	= 0x28;
-const VMB1RYNOS	= 0x29;
-const VMBPIRM	= 0x2A;
-const VMBPIRC	= 0x2B;
-const VMBPIRO	= 0x2C;
-const VMBGP4PIR	= 0x2D;
-const VMB1BLS	= 0x2E;
-const VMBDMIR	= 0x2F;
-const VMBRF8RXS	= 0x30;
+const modules    = 
+[{code : "0x01", name :  "VMB8PB", desc : "8 simple push buttons module"},
+ {code : "0x02", name :  "VMB1RY",  desc : "1 relay (with physical button) module"},
+ {code : "0x03", name :  "VMB1BL",  desc : "1 blind (with physical button) module"},
+ {code : "0x05", name :  "VMB6IN",  desc : "6 inputs module"},
+ {code : "0x07", name :  "VMB1DM",  desc : "1 dimmer (with physical button) module"},
+ {code : "0x08", name :  "VMB4RY",  desc : "4 relays (with physical buttons) module"},
+ {code : "0x09", name :  "VMB2BL",  desc : "2 blind (with physical button) module"},
+ {code : "0x0B", name :  "VMB4PD",  desc : "8 (2x4) push buttons with display module"},
+ {code : "0x0C", name :  "VMB1TS",  desc : "1 temperature sensor module"},
+ {code : "0x0D", name :  "VMB1TH",  desc : "-never produced-"},
+ {code : "0x0E", name :  "VMB1TC",  desc : "1 temperature sensor module"},
+ {code : "0x0F", name :  "VMB1LED",  desc : "1 LED controller module"},
+ {code : "0x10", name :  "VMB4RYLD",  desc : "4 relays (common power source) module"},
+ {code : "0x11", name :  "VMB4RYNO",  desc : "4 relays module"},
+ {code : "0x12", name :  "VMB4DC",  desc : "4 channels controller (0..10v) module"},
+ {code : "0x14", name :  "VMBDME",  desc : "1 dimmer (electronic transformer load) module"},
+ {code : "0x15", name :  "VMBDMI",  desc : "1 dimmer (inductive load) module"},
+ {code : "0x16", name :  "VMB8PBU",  desc : "8 push buttons (different form factor) module"},
+ {code : "0x17", name :  "VMB6BPN",  desc : "6 push buttons (Niko compatible) module"},
+ {code : "0x18", name :  "VMB2PBAN",  desc : "2 push buttons (Niko compatible) module"},
+ {code : "0x18", name :  "VMB2PBN",  desc : "2 push buttons (Niko compatible) module"},
+ {code : "0x1A", name :  "VMB4RF",  desc : "4 channels wireless remote module"},
+ {code : "0x1B", name :  "VMB1RYNO",  desc : "1 relay module"},
+ {code : "0x1C", name :  "VMB1BLE",  desc : "1 blind module"},
+ {code : "0x1D", name :  "VMB2BLE",  desc : "2 blind module"},
+ {code : "0x1E", name :  "VMBGP1",  desc : "1 push glass button module"},
+ {code : "0x1F", name :  "VMBGP2",  desc : "2 push glass button module"},
+ {code : "0x20", name :  "VMBGP4",  desc : "4 push glass button module"},
+
+ {code : "0x25", name :  "VMBGPTC", desc : ""},
+ {code : "0x28", name :  "VMBGPOD", desc : ""},
+ {code : "0x29", name :  "VMB1RYNOS", desc : ""},
+ {code : "0x2A", name :  "VMBPIRM", desc : "Infra Red sensor"},
+ {code : "0x2B", name :  "VMBPIRC", desc : "Infra Red sensor"},
+ {code : "0x2C", name :  "VMBPIRO", desc : "Infra Red sensor"},
+ {code : "0x2D", name :  "VMBGP4PIR", desc : "4 push buttons + Infra Red sensor"},
+ {code : "0x2E", name :  "VMB1BLS", desc : ""},
+ {code : "0x2F", name :  "VMBDMIR", desc : ""},
+ {code : "0x30", name :  "VMBRF8RXS", desc : ""}]
 //#endregion
 
 //#region Velbus functions ID
