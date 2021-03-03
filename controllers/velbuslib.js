@@ -22,6 +22,7 @@ const modules    =
  {code : "0x05", name :  "VMB6IN",  desc : "6 inputs module"},
  {code : "0x07", name :  "VMB1DM",  desc : "1 dimmer (with physical button) module"},
  {code : "0x08", name :  "VMB4RY",  desc : "4 relays (with physical buttons) module"},
+ {code : "0x08", name :  "VMB4RY",  desc : "4 relays (with physical buttons) module"},
  {code : "0x09", name :  "VMB2BL",  desc : "2 blind (with physical button) module"},
  {code : "0x0B", name :  "VMB4PD",  desc : "8 (2x4) push buttons with display module"},
  {code : "0x0C", name :  "VMB1TS",  desc : "1 temperature sensor module"},
@@ -54,7 +55,7 @@ const modules    =
  {code : "0x2D", name :  "VMBGP4PIR", desc : "4 push buttons + Infra Red sensor"},
  {code : "0x2E", name :  "VMB1BLS", desc : ""},
  {code : "0x2F", name :  "VMBDMIR", desc : ""},
- {code : "0x30", name :  "VMBRF8RXS", desc : ""}]
+ {code : "0x30", name :  "VMBRF8RXS", desc : ""}];
 //#endregion
 
 //#region Velbus functions ID
@@ -152,6 +153,37 @@ const toHexa = (donnees) => {
     return dhex;
 }
 
+// send back name module from code module
+const getName = (code) => {
+    for (let item of modules) {
+        if (Number(item.code) == code) return item.name;
+        // console.log("this is ", item.code, "converted into ", Number(item.code), code);
+    }
+    return "unknown";
+};
+// send back code module from name module
+const getCode = (name) => {
+    for (let item of modules) {
+        if (item.name == name) return Number(item.code);
+    }
+    return 0x00;
+};
+// send back description module from code or name module
+const getDesc = (element) => {
+    if (typeOf(element) == string) {
+        for (let item of modules) {
+            if (item.name == element) return item.desc;
+        }
+        return "unknown";
+    } else {
+        for (let item of modules) {
+            if (Number(item.code) == element) return item.desc;
+         }
+        return "unknown";
+    }
+
+};
+
 // ========================= functions VMB RELAY ===================================
 const relaySet = (adr, part, state) => {
     let trame=new Uint8Array(8);
@@ -172,5 +204,7 @@ module.exports = {
     CheckSum,
     Cut,
     toHexa,
+    getName, getCode, getDesc,
     relaySet
 }
+
