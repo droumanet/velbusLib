@@ -27,10 +27,11 @@ client.connect(port, host, connexion);
 client.on('data', (data) => {
     // frames are coming in a buffer. We need to separate them and display the result
     velbus.Cut(data).forEach(element => {
+        let desc = velbus.analysing(element);
         let d = velbus.toHexa(element);
         let crc = velbus.CheckSum(element);
-        console.log("DATA: "+d+" CRC:"+crc.toString(16));
-        io.emit('news',"DATA: "+d+" CRC:"+crc.toString(16))
+        // console.log("DATA: "+d+" CRC:"+crc.toString(16));
+        io.emit('news',desc + "--"+d);
     });
 });
 client.on('close', ()  => {

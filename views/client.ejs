@@ -1,6 +1,7 @@
 <html>
   <head>
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="style.css">
     <title>Socket client</title>
   </head>
   <style>
@@ -19,8 +20,10 @@
       // Function to show only last nbMsg messages
       function listerMsg() {
         let texte = "";
+        let part = [];
         for (let i=0; i < tableMsg.length; i++) {
-          texte = texte + tableMsg[i] + "<br>\n";
+          part = tableMsg[i].split("--")
+          texte = texte + '<div class="line"><div class="msg">'+part[0]+"</div>" + '<div class="other">'+part[1]+"</div><div></div></div>\n";
         }
         return texte;
       }

@@ -1,11 +1,20 @@
-/* ==========================================================================================
+/* ====================================================================================================================
     VELBUS Library
     @author : David ROUMANET
     @date : 2021-02-16 (start date)
     @version : 1.0
 
     2021-02-16  Initial setup with checksum, cut multi-messages in one frame (inspired by Purebasic VMBLibs)
-   ==========================================================================================
+   ====================================================================================================================
+
+    Velbus frame
+  --------------------------------------------------------------------------------------------------------------------
+ |    0    |   1  |  2   |    3    |  4   |   5   |   6   |   7   |   8   |   9   |   10  |   11  |     x    |   x+1  |
+  --------------------------------------------------------------------------------------------------------------------
+ | VMBStrt | Prio | Addr | RTR/Len | Func | Byte2 | Byte3 | Byte4 | Byte5 | Byte6 | Byte7 | Byte8 | Checksum | VMBEnd |
+  --------------------------------------------------------------------------------------------------------------------
+  (1) Len = RTR/Len & 0x0F
+
 */
 
 // messages constants
@@ -14,7 +23,7 @@ const VMB_EndX = 0x04;
 const VMB_PrioLow = 0xFB;
 const VMB_PrioHi = 0xF8;
 
-//#region Modules constants
+//#region modules AS Modules (code, name, desc)
 const modules    = 
 [{code : "0x01", name :  "VMB8PB", desc : "8 simple push buttons module"},
  {code : "0x02", name :  "VMB1RY",  desc : "1 relay (with physical button) module"},
@@ -45,7 +54,6 @@ const modules    =
  {code : "0x1E", name :  "VMBGP1",  desc : "1 push glass button module"},
  {code : "0x1F", name :  "VMBGP2",  desc : "2 push glass button module"},
  {code : "0x20", name :  "VMBGP4",  desc : "4 push glass button module"},
-
  {code : "0x25", name :  "VMBGPTC", desc : ""},
  {code : "0x28", name :  "VMBGPOD", desc : ""},
  {code : "0x29", name :  "VMB1RYNOS", desc : ""},
@@ -58,51 +66,73 @@ const modules    =
  {code : "0x30", name :  "VMBRF8RXS", desc : ""}];
 //#endregion
 
-//#region Velbus functions ID
-const VMBTransmitInputStatus = 0x00;
-const VMBRelayOff            = 0x01;
-const VMBRelayOn             = 0x02;
-const VMBRelayTimer          = 0x03;
-const VMBBlindHalt           = 0x04;
-const VMBBlindUp             = 0x05;
-const VMBBlindDown           = 0x06;
-const VMBStartBlink          = 0x0D;
-const VMBReadMemBlock        = 0xC9;
-const VMBWriteMemBlock       = 0xCA;
-const VMBMemDumpRequest      = 0xCB;
-const VMBTransmitMemBlock    = 0xCC;
-const VMBLCDTextRequest      = 0xD0;
-const VMBButtonTimer         = 0xD1;
-const VMBLCDBackLightDefault = 0xD2;
-const VMBButtonBackLightDef  = 0xD3;
-const VMBButtonBackLight     = 0xD4;
-const VMBBackContrastRequest = 0xD5;
-const VMBRealTimeClockRequest= 0xD7;
-const VMBRealTimeClockSet    = 0xD8;
-const VMBErrorCountRequest   = 0xD9;
-const VMBErrorCountResponse  = 0xDA;
-const VMBTempReset           = 0xE4;
-const VMBTempRequest         = 0xE5;
-const VMBTempResponse        = 0xE6;
-const VMBTransmitBlindStatus = 0xEC;
-const VMBTransmitDimStatus   = 0xEE;
-const VMBNameResquest        = 0xEF;
-const VMBNamePart1           = 0xF0;
-const VMBNamePart2           = 0xF1;
-const VMBNamePart3           = 0xF2;
-const VMBLCDBackLight        = 0xF3;
-const VMBLedUpdate           = 0xF4;
-const VMBLedClear            = 0xF5;
-const VMBLedSet              = 0xF6;
-const VMBBlinkSlow           = 0xF7;
-const VMBBlinkFast           = 0xF8;
-const VMBBlinkVeryFast       = 0xF9;
-const VMBStatusRequest       = 0xFA;
-const VMBTransmitRelayStatus = 0xFB;
-const VMBWriteMem            = 0xFC;
-const VMBReadMem             = 0xFD;
-const VMBTransmitMem         = 0xFE;
-const VMBModuleStatus        = 0xFF;
+//#region VMBfunction AS Velbus functions (code, name)
+const VMBfunction    = 
+[{code : 0x00, name :  "VMBInputStatusResponse"},
+{code : 0x01, name :  "VMBRelayOff"},
+{code : 0x02, name :  "VMBRelayOn"},
+{code : 0x03, name :  "VMBRelayTimer"},
+{code : 0x04, name :  "VMBBlindHalt"},
+{code : 0x05, name :  "VMBBlindUp"},
+{code : 0x06, name :  "VMBBlindDown"},
+{code : 0x06, name :  "VMBDimmerValueSet"},
+{code : 0x0D, name :  "VMBStartBlink"},
+{code : 0x0F, name :  "VMBSliderStatusRequest"},
+{code : 0x12, name :  "VMBUnlockChannel"},
+{code : 0x13, name :  "VMBUnlockChannel"},
+{code : 0xAF, name :  "VMBSetDaylightSaving"},
+{code : 0xB1, name :  "VMBDisableChannelProgram"},
+{code : 0xB2, name :  "VMBEnableChannelProgram"},
+{code : 0xB3, name :  "VMBSelectProgram"},
+{code : 0xB7, name :  "VMBDateStatus"},
+{code : 0xB9, name :  "VMBSensorSettingsPart4"},
+{code : 0xBB, name :  "VMBSensorConfigData"},
+{code : 0xBD, name :  "VMBCounterStatusRequest"},
+{code : 0xBE, name :  "VMBCounterStatusResponse"},
+{code : 0xBF, name :  "undefined"},
+{code : 0xC6, name :  "VMBSensorSettingsPart3"},
+{code : 0xC9, name :  "VMBReadMemBlock"},
+{code : 0xCA, name :  "VMBWriteMemBlock"},
+{code : 0xCB, name :  "VMBMemDumpRequest"},
+{code : 0xCC, name :  "VMBTransmitMemBlock"},
+{code : 0xD0, name :  "VMBLCDTextRequest"},
+{code : 0xD1, name :  "VMBButtonTimer"},
+{code : 0xD2, name :  "VMBLCDBackLightDefault"},
+{code : 0xD3, name :  "VMBButtonBackLightDef"},
+{code : 0xD4, name :  "VMBButtonBackLight"},
+{code : 0xD5, name :  "VMBBackContrastRequest"},
+{code : 0xD7, name :  "VMBRealTimeClockRequest"},
+{code : 0xD8, name :  "VMBRealTimeClockSet"},
+{code : 0xD9, name :  "VMBErrorCountRequest"},
+{code : 0xDA, name :  "VMBErrorCountResponse"},
+{code : 0xE4, name :  "VMBTempReset"},
+{code : 0xE5, name :  "VMBTempRequest"},
+{code : 0xE6, name :  "VMBTempResponse"},
+{code : 0xE7, name :  "-"},
+{code : 0xE8, name :  "VMBSensorSettingsPart1"},
+{code : 0xE9, name :  "VMBSensorSettingsPart2"},
+{code : 0xEA, name :  "VMBSensorStatusResponse"},
+{code : 0xEC, name :  "VMBTransmitBlindStatus"},
+{code : 0xED, name :  "VMB7InputStatusResponse"},
+{code : 0xEE, name :  "VMBTransmitDimStatus"},
+{code : 0xEF, name :  "VMBNameResquest"},
+{code : 0xF0, name :  "VMBNamePart1"},
+{code : 0xF1, name :  "VMBNamePart2"},
+{code : 0xF2, name :  "VMBNamePart3"},
+{code : 0xF3, name :  "VMBLCDBackLightSet"},
+{code : 0xF4, name :  "VMBLedUpdate"},
+{code : 0xF5, name :  "VMBLedClear"},
+{code : 0xF6, name :  "VMBLedSet"},
+{code : 0xF7, name :  "VMBBlinkSlow"},
+{code : 0xF8, name :  "VMBBlinkFast"},
+{code : 0xF9, name :  "VMBBlinkVeryFast"},
+{code : 0xFA, name :  "VMBStatusRequest"},
+
+{code : 0xFB, name :  "VMBTransmitRelayStatus"},
+{code : 0xFC, name :  "VMBWriteMem"},
+{code : 0xFD, name :  "VMBReadMem"},
+{code : 0xFE, name :  "VMBTransmitMem"},
+{code : 0xFF, name :  "VMBModuleStatus"}];
 //#endregion
 
 
@@ -129,7 +159,7 @@ const Cut = (data) => {
             VMBSize = longueur+3+1+1;     // message length + offset 3 + checksum + end byte
             if (data[i+VMBSize] == 0x04) {
                 // push de i à VMBSize dans tableau
-                console.log("trame OK à position ",i, " longueur ", VMBSize);
+                // console.log("trame OK à position ",i, " longueur ", VMBSize);
                 table.push(data.slice(i, i+VMBSize+1));     // slice utilise position début et position fin
                 i = i + VMBSize;
             } else {
@@ -137,7 +167,7 @@ const Cut = (data) => {
             }
         }
     }
-    console.log("table = ",table);
+    // console.log("table = ",table);
     return table;
 }
 
@@ -155,10 +185,8 @@ const toHexa = (donnees) => {
 
 // send back name module from code module
 const getName = (code) => {
-    for (let item of modules) {
-        if (Number(item.code) == code) return item.name;
-        // console.log("this is ", item.code, "converted into ", Number(item.code), code);
-    }
+    let result = modules.find(item => Number(item.code) == code);
+    if (result !== undefined) return result.name;
     return "unknown";
 };
 // send back code module from name module
@@ -184,6 +212,45 @@ const getDesc = (element) => {
 
 };
 
+// send back function name module from function code module
+const getFunction = (code) => {
+    let result = VMBfunction.find(item => Number(item.code) == code);
+    if (result !== undefined) return result.name;
+    return "unknown";
+};
+
+const analysing = (element) => {
+    let fctVelbus = element[4];
+    let lenVelbus = element[3] & 0x0F;
+    let adrVelbus = element[2];
+    let texte = "Capteur : "+adrVelbus.toString(16)+ "  Fonction :"+fctVelbus.toString(16).toUpperCase()+"  Taille :"+ lenVelbus+ " ("+getFunction(fctVelbus)+")"
+    
+    switch (Number(fctVelbus)) {
+        case 0x00:
+            let buttonOn = ("00000000"+element[5].toString(2)).slice(-8);
+            //var output = ("000000" + num).slice(-6);
+            texte += "["+buttonOn+"]"
+        break;
+        case 0xBE:
+            // Read VMB7IN counter
+            let division = (element[5] >> 2) * 100;
+            let part = (element[5] & 0x7);   // part is 0 to 3
+            let compteur = (element[6]*0x1000000+element[7]*0x10000+element[8]*0x100+element[9])/division;
+            compteur = Math.round(compteur*1000)/1000;
+            let conso = Math.round((1000*1000*3600/(element[10]*256+element[11]))/division*10)/10;
+            texte += "  "+compteur+ " KW, (Instantané :"+ conso+" W)";
+        break;
+        case 0xE6:
+            texte += "  "+Number(element[5])/2+ "°C";
+            break;
+    
+        default:
+            break;
+    }
+    console.log(texte)
+    return texte;
+}
+
 // ========================= functions VMB RELAY ===================================
 const relaySet = (adr, part, state) => {
     let trame=new Uint8Array(8);
@@ -205,6 +272,7 @@ module.exports = {
     Cut,
     toHexa,
     getName, getCode, getDesc,
-    relaySet
+    relaySet,
+    analysing
 }
 
