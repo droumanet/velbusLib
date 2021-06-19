@@ -1,0 +1,19 @@
+body {
+    background-color: #515151;
+    color: white;
+}
+div.line {
+    border-color: rgb(110, 110, 110);
+    border-style: solid;
+    border-width: 1px;
+}
+div.msg { 
+    font-family: arial; font-size: 13px; font-style: normal;
+    display: inline-flex;
+    width: 800px;
+}
+div.other {
+    font-family: monospace; font-size: 13px; font-style: normal; font-variant: small-caps;
+    display: inline-flex;
+    width: 450px;
+}
