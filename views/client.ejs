@@ -22,7 +22,9 @@
         let texte = "";
         let part = [];
         for (let i=0; i < tableMsg.length; i++) {
-          part = tableMsg[i].split("--")
+          console.log("Table "+i+"⏩", tableMsg[i])
+          part[0] = tableMsg[i].DESCRIPTION
+          part[1] = tableMsg[i].HEX
           texte = texte + '<div class="line"><div class="msg">'+part[0]+"</div>" + '<div class="other">'+part[1]+"</div><div></div></div>\n";
         }
         return texte;
@@ -38,8 +40,13 @@
           etat.value = "ON"
         }
       }
+      // Fonction to send blindUp or blindDown 1s
+      function BlindMove(arg) {
+        let etat= document.getElementById("btLampe");
+        socket.emit('blind', arg);
+      }
       
-      socket.on('news', (msg) => {
+      socket.on('msg', (msg) => {
         console.log(msg);
         tableMsg.push(msg);
         if (tableMsg.length > nbMsg) tableMsg.shift();
@@ -50,5 +57,7 @@
     <div id="VelbusMsg">aucun message Velbus</div>
     <div>FIN</div>
     <input type="button" id="btLampe" value="ON" onclick="AllumerLampe()">
+    <input type="button" id="btVolet" value="DOWN" onclick="BlindMove('DOWN')">
+    <input type="button" id="btVolet2" value="UP" onclick="BlindMove('UP')">
   </body>
 </html>

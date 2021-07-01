@@ -15,5 +15,10 @@ div.msg {
 div.other {
     font-family: monospace; font-size: 13px; font-style: normal; font-variant: small-caps;
     display: inline-flex;
+    color:rgb(200, 200, 200);
     width: 450px;
+}
+input {
+    width: 200px;
+    height: 50px;
 }

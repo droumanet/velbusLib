@@ -16,6 +16,8 @@
   (1) Len = RTR/Len & 0x0F
 
 */
+const EventEmitter = require('events')
+const VMBEmitter = new EventEmitter()
 
 // messages constants
 const VMB_StartX = 0x0F;
@@ -80,6 +82,9 @@ const VMBfunction    =
 {code : 0x0F, name :  "VMBSliderStatusRequest"},
 {code : 0x12, name :  "VMBUnlockChannel"},
 {code : 0x13, name :  "VMBUnlockChannel"},
+{code : 0x66, name :  "VMB update1"},
+{code : 0x67, name :  "VMB update2"},
+{code : 0x68, name :  "VMB update3"},
 {code : 0xAF, name :  "VMBSetDaylightSaving"},
 {code : 0xB1, name :  "VMBDisableChannelProgram"},
 {code : 0xB2, name :  "VMBEnableChannelProgram"},
@@ -127,7 +132,6 @@ const VMBfunction    =
 {code : 0xF8, name :  "VMBBlinkFast"},
 {code : 0xF9, name :  "VMBBlinkVeryFast"},
 {code : 0xFA, name :  "VMBStatusRequest"},
-
 {code : 0xFB, name :  "VMBTransmitRelayStatus"},
 {code : 0xFC, name :  "VMBWriteMem"},
 {code : 0xFD, name :  "VMBReadMem"},
@@ -183,6 +187,21 @@ const toHexa = (donnees) => {
     return dhex;
 }
 
+// convert a binary value into a string with number or . (ex 5 => 1.4.....)
+toButtons = (valeur, nb) => {
+    let response = "";
+    let x = 1;
+    for (let t=1; t < (nb+1); t++) {
+        if (valeur & x) {
+            response += t.toString();
+        } else {
+            response += ".";
+        }
+        x = x << 1
+    }
+    return response;
+}
+
 // send back name module from code module
 const getName = (code) => {
     let result = modules.find(item => Number(item.code) == code);
@@ -220,16 +239,17 @@ const getFunction = (code) => {
 };
 
 const analysing = (element) => {
-    let fctVelbus = element[4];
+    let fctVelbus = Number(element[4]);
     let lenVelbus = element[3] & 0x0F;
     let adrVelbus = element[2];
     let texte = "Capteur : "+adrVelbus.toString(16)+ "  Fonction :"+fctVelbus.toString(16).toUpperCase()+"  Taille :"+ lenVelbus+ " ("+getFunction(fctVelbus)+")"
-    
-    switch (Number(fctVelbus)) {
+    let buttonOn = "";
+
+    switch (fctVelbus) {
         case 0x00:
-            let buttonOn = ("00000000"+element[5].toString(2)).slice(-8);
+            buttonOn = toButtons(element[5], 8);
             //var output = ("000000" + num).slice(-6);
-            texte += "["+buttonOn+"]"
+            texte += " ["+buttonOn+"]"
         break;
         case 0xBE:
             // Read VMB7IN counter
@@ -237,20 +257,35 @@ const analysing = (element) => {
             let part = (element[5] & 0x7);   // part is 0 to 3
             let compteur = (element[6]*0x1000000+element[7]*0x10000+element[8]*0x100+element[9])/division;
             compteur = Math.round(compteur*1000)/1000;
-            let conso = Math.round((1000*1000*3600/(element[10]*256+element[11]))/division*10)/10;
+            let conso=0;
+            if (element[10] != 0xFF && element[11] != 0xFF) {
+                let conso = Math.round((1000*1000*3600/(element[10]*256+element[11]))/division*10)/10;
+            }
             texte += "  "+compteur+ " KW, (Instantané :"+ conso+" W)";
         break;
         case 0xE6:
             texte += "  "+Number(element[5])/2+ "°C";
             break;
-    
+        case 0xEA:
+            texte += "  "+Number(element[8])/2+ "°C";
+            break;
+        case 0xFB:
+            buttonOn = toButtons(element[7], 4);
+            texte += " ["+buttonOn+"]"
+            break;
         default:
             break;
     }
-    console.log(texte)
-    return texte;
+    // if (fctVelbus != 0xF8 && fctVelbus != 0xF6 && fctVelbus != 0xF7) {
+        console.log(texte)
+        return texte;
+    //}
+    //return "";
 }
-
+//
+const VMBWrite = (req, res) => {
+    client.write(req);
+}
 // ========================= functions VMB RELAY ===================================
 const relaySet = (adr, part, state) => {
     let trame=new Uint8Array(8);
@@ -266,13 +301,90 @@ const relaySet = (adr, part, state) => {
     return trame;
 }
 
+// ========================= functions VMB BLIND ====================================
+const blindMove = (adr, part, state, duration=0) => {
+    if (state > 0) {state = 0x05} else {state = 0x06}
+    if (part == 1) {part = 0x03}
+    else if (part == 2) {part = 0x0C}
+    else { part = 0x0F }
+    let trame=new Uint8Array(11)
+    trame[0] = VMB_StartX
+    trame[1] = VMB_PrioHi
+    trame[2] = adr
+    trame[3] = 0x05   // len
+    trame[4] = state
+    trame[5] = part
+    trame[6] = duration >>16 & 0xFF
+    trame[7] = duration >>8 & 0xFF
+    trame[8] = duration & 0xFF
+    trame[9] = CheckSum(trame, 0)
+    trame[10] = VMB_EndX
+    return trame
+}
+const blindStop = (adr, part) => {
+    if (part == 1) part = 0x03
+    if (part == 2) part = 0x0C
+    if (part > 2) part = 0x0F
+    let trame=new Uint8Array(8)
+    trame[0] = VMB_StartX
+    trame[1] = VMB_PrioHi
+    trame[2] = adr
+    trame[3] = 0x02     // len
+    trame[4] = 0x04     // stop
+    trame[5] = part
+    trame[6] = CheckSum(trame, 0)
+    trame[7] = VMB_EndX
+    return trame
+}
+
+// ========================= SERVER PART ===========================================
+let connexion = () => {
+    console.log("Velbus connexion launched...");
+}
+
+let net = require("net");
+let client = new net.Socket();
+const VelbusStart = (host, port) => {
+    client.connect(port, host);
+}
+
+client.on('connect', (data) => {
+    console.log("connected to > ", client.remoteAddress, ":", client.remotePort);
+})
+
+client.on('data', (data) => {
+    let VMBmsgList = [], entry={}
+    let desc='', d='', crc=0
+
+    // RAW data could have multiple Velbus message
+    Cut(data).forEach(element => {
+        desc = analysing(element);
+        d = toHexa(element);
+        crc = CheckSum(element);
+        // console.log("DATA: "+d+" CRC:"+crc.toString(16));
+        entry = {"RAW": element, "HEX":d, "CRC": crc, "DESCRIPTION":desc}
+        VMBmsgList.push(entry)
+        VMBEmitter.emit("msg", entry);
+    });
+    // console.log("Emettre : ",VMBmsgList);
+    // VMBEmitter.emit("msg", VMBmsgList);
+});
+client.on('close', ()  => {
+    console.log("Closing velbus server connexion");
+});
+
+
 
 module.exports = {
+    VMBEmitter,
+    VelbusStart,
     CheckSum,
     Cut,
     toHexa,
     getName, getCode, getDesc,
+    VMBWrite,
     relaySet,
+    blindMove, blindStop,
     analysing
 }
 

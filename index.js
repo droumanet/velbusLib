@@ -1,57 +1,47 @@
+'use strict';
 // Partie serveur Node.JS classique
 let app = require('express')();
 let express = require('express');
 let http = require('http').createServer(app);
 let bodyparser = require('body-parser');
 let io = require("socket.io")(http);        // create websocket with existing port HTTP
+
 let Routeur = require('./routes/routes');
 app.set('view engine', 'ejs');
 app.use(express.static('views'));
 let portWeb = 8002;
 
 // Partie Velbus
-let net = require("net");
-let traitement = require('./controllers/traitement');
-let velbus = require('./controllers/velbuslib');
-
-// let VMBserver = require();
 let host = "teo-tea.hd.free.fr";
 let port = 8445;
-let client = new net.Socket();
-let connexion = () => {
-    console.log("connected to velbus server...");
-}
-client.connect(port, host, connexion);
-
-// receiving 
-client.on('data', (data) => {
-    // frames are coming in a buffer. We need to separate them and display the result
-    velbus.Cut(data).forEach(element => {
-        let desc = velbus.analysing(element);
-        let d = velbus.toHexa(element);
-        let crc = velbus.CheckSum(element);
-        // console.log("DATA: "+d+" CRC:"+crc.toString(16));
-        io.emit('news',desc + "--"+d);
-    });
-});
-client.on('close', ()  => {
-    console.log("CLOSING CONNEXION");
-});
+let traitement = require('./controllers/traitement');
+let velbusServer = require('./controllers/velbuslib');
+velbusServer.VelbusStart(host, port);
 
 // établissement de la connexion
 // let listenClients = io.listen(http);
 io.on('connection', (socket) =>{
     console.log(`Connecté au client ${socket.id}`);
     socket.on('relay', (msg) => {
-        console.log("Action sur le relay : ", msg, velbus.toHexa(velbus.relaySet(0x02, 1, 1)));
-        if (msg == "ON") client.write(velbus.relaySet(0x2E, 1, 1));
-        if (msg == "OFF") client.write(velbus.relaySet(0x2E, 1, 0));
+        console.log("Action sur le relay : ", msg, velbusServer.toHexa(velbusServer.relaySet(0x02, 1, 1)));
+        if (msg == "ON") velbusServer.VMBWrite(velbusServer.relaySet(0x2E, 1, 1));
+        if (msg == "OFF") velbusServer.VMBWrite(velbusServer.relaySet(0x2E, 1, 0));
     });
+    socket.on('blind', (msg) => {
+        console.log("Action sur le volet : ", msg, velbusServer.toHexa(velbusServer.blindMove(0x2C, 1, -1, 1)));
+        if (msg == "DOWN") velbusServer.VMBWrite(velbusServer.blindMove(0x2C, 1, -1, 1));
+        if (msg == "UP") velbusServer.VMBWrite(velbusServer.blindMove(0x2C, 1, 1, 1));
+        if (msg == "STOP") velbusServer.VMBWrite(velbusServer.blindStop(0x2C, 1));
+    });
+ });
+ velbusServer.VMBEmitter.on("msg", (dataSend) => {
+     console.log("Envoi ⏩ ",dataSend)
+     io.emit("msg", dataSend)
  });
 
 // lancement serveur NodeJS
 http.listen(portWeb, () => {
-    console.log("Le serveur écoute sur le port ", portWeb);
+    console.log("Web app listening on port ", portWeb);
 });
 
 
