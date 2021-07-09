@@ -18,15 +18,14 @@
 */
 const EventEmitter = require('events')
 const VMBEmitter = new EventEmitter()
-
-// messages constants
 const VMB_StartX = 0x0F;
 const VMB_EndX = 0x04;
-const VMB_PrioLow = 0xFB;
 const VMB_PrioHi = 0xF8;
+const VMB_PrioLo = 0xFB;
+
 
 //#region modules AS Modules (code, name, desc)
-const modules    = 
+const VMBmodules    = 
 [{code : "0x01", name :  "VMB8PB", desc : "8 simple push buttons module"},
  {code : "0x02", name :  "VMB1RY",  desc : "1 relay (with physical button) module"},
  {code : "0x03", name :  "VMB1BL",  desc : "1 blind (with physical button) module"},
@@ -65,11 +64,12 @@ const modules    =
  {code : "0x2D", name :  "VMBGP4PIR", desc : "4 push buttons + Infra Red sensor"},
  {code : "0x2E", name :  "VMB1BLS", desc : ""},
  {code : "0x2F", name :  "VMBDMIR", desc : ""},
- {code : "0x30", name :  "VMBRF8RXS", desc : ""}];
+ {code : "0x30", name :  "VMBRF8RXS", desc : ""}
+];
 //#endregion
 
 //#region VMBfunction AS Velbus functions (code, name)
-const VMBfunction    = 
+VMBfunction    = 
 [{code : 0x00, name :  "VMBInputStatusResponse"},
 {code : 0x01, name :  "VMBRelayOff"},
 {code : 0x02, name :  "VMBRelayOn"},
@@ -138,7 +138,6 @@ const VMBfunction    =
 {code : 0xFE, name :  "VMBTransmitMem"},
 {code : 0xFF, name :  "VMBModuleStatus"}];
 //#endregion
-
 
 // Checksum : sum all bytes then XOR FF + 1
 const CheckSum = (frame, full=1) => {
