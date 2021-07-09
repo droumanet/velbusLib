@@ -12,11 +12,10 @@ app.use(express.static('views'));
 let portWeb = 8002;
 
 // Partie Velbus
-let host = "teo-tea.hd.free.fr";
-let port = 8445;
+let VMBserver = require('./VMBServer.ini');
 let traitement = require('./controllers/traitement');
 let velbusServer = require('./controllers/velbuslib');
-velbusServer.VelbusStart(host, port);
+velbusServer.VelbusStart(VMBserver.host, VMBserver.port);
 
 // établissement de la connexion
 // let listenClients = io.listen(http);
