@@ -1,16 +1,4 @@
-<html>
-  <head>
-    <script src="/socket.io/socket.io.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <title>Socket client</title>
-  </head>
-  <style>
-    #VelbusMsg {
-      border-color: black;
-      border-style: solid;
-    }
-  </style>
-  <body>
+<%- include ('./header') -%>
     <script>
       // initialisation
       var socket = io.connect();
@@ -22,7 +10,7 @@
         let texte = "";
         let part = [];
         for (let i=0; i < tableMsg.length; i++) {
-          console.log("Table "+i+"⏩", tableMsg[i])
+          // console.log("Table "+i+"⏩", tableMsg[i])
           part[0] = tableMsg[i].DESCRIPTION
           part[1] = tableMsg[i].HEX
           texte = texte + '<div class="line"><div class="msg">'+part[0]+"</div>" + '<div class="other">'+part[1]+"</div><div></div></div>\n";
@@ -33,31 +21,55 @@
       // Fonction to send relayOn or relayOff
       function AllumerLampe() {
         let etat= document.getElementById("btLampe");
-        socket.emit('relay', etat.value);
+        let sendMsg = { "address": 0x34, "part": 1, "status": etat.value }
+        socket.emit('relay', sendMsg);
         if (etat.value == "ON") {
           etat.value = "OFF";
         } else {        
           etat.value = "ON"
         }
       }
+      function ChangeRelay() {
+        let etat = document.getElementById("btRelay");
+        let modId = Number("0x" + document.getElementById("moduleId").value)
+        let part = Number(document.getElementById("part").value);
+        let sendMsg = { "address": modId, "part": part, "status": "ON" }
+        if (etat.value == "ON") {
+          sendMsg.status = "ON"
+          socket.emit('relay', sendMsg);
+          etat.value = "OFF";
+        } else {
+          sendMsg.status = "OFF"
+          socket.emit('relay', sendMsg);
+          etat.value = "ON"
+        }
+      }
       // Fonction to send blindUp or blindDown 1s
       function BlindMove(arg) {
-        let etat= document.getElementById("btLampe");
-        socket.emit('blind', arg);
+        let modId = Number("0x"+document.getElementById("moduleId").value)
+        let part= Number(document.getElementById("part").value);
+        let sendMsg = {"address" : modId, "part" : part, "status" : arg}
+        socket.emit('blind', sendMsg);
       }
       
       socket.on('msg', (msg) => {
-        console.log(msg);
+        // console.log(msg);
         tableMsg.push(msg);
         if (tableMsg.length > nbMsg) tableMsg.shift();
         document.getElementById('VelbusMsg').innerHTML = listerMsg()
       })
     </script>
-    <div>This is our socket.html file</div>
-    <div id="VelbusMsg">aucun message Velbus</div>
-    <div>FIN</div>
-    <input type="button" id="btLampe" value="ON" onclick="AllumerLampe()">
-    <input type="button" id="btVolet" value="DOWN" onclick="BlindMove('DOWN')">
-    <input type="button" id="btVolet2" value="UP" onclick="BlindMove('UP')">
-  </body>
-</html>
+    <div>
+      <input type="text" class="input is-large" id="moduleId" value="2C" placeholder="hexa, like 2C" pattern="[a-fA-F0-9]{1,2}" title="hex value from 00 to FF">
+      <input type="text" class="input is-large" id="part" value="1" placeholder="part number (1,3,4...)" pattern="[1-8]" title="number between 1 and 8">
+      <input type="button" class="button is-dark is-large" id="btLampe" value="ON" onclick="AllumerLampe()">
+      <input type="button" class="button is-dark is-large is-primary" id="btRelay" value="ON" onclick="ChangeRelay()">
+      <input type="button" class="button is-dark is-large" id="btVolet" value="DOWN" onclick="BlindMove('DOWN')">
+      <input type="button" class="button is-dark is-large" id="btVolet3" value="STOP" onclick="BlindMove('STOP')">
+      <input type="button" class="button is-dark is-large" id="btVolet2" value="UP" onclick="BlindMove('UP')">
+    </div>
+    <div>
+      <div>Real Time socket Analyzer</div>
+      <div id="VelbusMsg">aucun message Velbus</div>
+    </div>
+    <%- include ('./footer') -%>

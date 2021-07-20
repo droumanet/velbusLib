@@ -10,18 +10,21 @@ div.line {
 div.msg { 
     font-family: arial; font-size: 13px; font-style: normal;
     display: inline-flex;
-    width: 800px;
+    width: 750px;
 }
 div.other {
     font-family: monospace; font-size: 13px; font-style: normal; font-variant: small-caps;
     display: inline-flex;
     color:rgb(200, 200, 200);
-    width: 450px;
+    width: 420px;
 }
+/*
 input {
     width: 200px;
     height: 50px;
 }
+*/
+
 #VelbusMsg {
     border-color: black;
     border-style: solid;

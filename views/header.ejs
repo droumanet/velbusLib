@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="style.css">
+    <title>Velbus client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="https://david.rouma.net">
+            <img src="Arvel.png" height="64">
+          </a>
+      
+          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+      
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">
+            <a class="navbar-item">
+                Accueil
+            </a>
+      
+            <a class="navbar-item">
+                Lampes
+            </a>
+
+            <a class="navbar-item">
+                Volets
+              </a>
+        
+              <a class="navbar-item">
+                Températures
+              </a>
+
+              <a class="navbar-item">
+                Énergie
+              </a>
+
+              <a class="navbar-item" href="/installation">
+                Installation
+              </a>
+          </div>
+        </div>
+    </nav>
