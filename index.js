@@ -4,7 +4,7 @@ let path = require('path')
 let express = require('express')
 let app = require('express')()
 app.set('view engine', 'ejs')
-app.set('views',path.join(__dirname+'/views/'))
+app.set('views', path.join(__dirname + '/views/'))
 app.use(express.static('views'))
 
 // TODO - Timer part (see https://crontab.guru)
@@ -34,10 +34,10 @@ let moduleList = []
 
 // établissement de la connexion
 // let listenClients = io.listen(http);
-io.on('connection', (socket) =>{
+io.on('connection', (socket) => {
     console.log(`Connecté au client ${socket.id}`)
     socket.on('relay', (msg) => {
-        console.log("► ",msg)
+        console.log("► ", msg)
         if (msg.status == "ON") velbusServer.VMBWrite(velbusServer.relaySet(msg.address, msg.part, 1))
         if (msg.status == "OFF") velbusServer.VMBWrite(velbusServer.relaySet(msg.address, msg.part, 0))
         console.log("Action sur le relay : ", msg, "address:", msg.address);
@@ -48,13 +48,18 @@ io.on('connection', (socket) =>{
         if (msg.status == "STOP") velbusServer.VMBWrite(velbusServer.blindStop(msg.address, msg.part))
         console.log("Action sur le volet : ", msg)
     })
- });
- velbusServer.VMBEmitter.on("msg", (dataSend) => {
-     console.log("Envoi ⏩ ",dataSend.RAW)
-     io.emit("msg", dataSend)
- });
+    socket.on('discover', () => {
+        for (let t = 1; t < 255; t++) {
+            velbusServer.discover(t)
+        }
+    })
+})
+velbusServer.VMBEmitter.on("msg", (dataSend) => {
+    console.log("Envoi ⏩ ", dataSend.RAW)
+    io.emit("msg", dataSend)
+});
 
-// lancement serveur NodeJS sur le port 8002
+// NOTE - lancement serveur NodeJS sur le port 8002
 let portWeb = 8002;
 http.listen(portWeb, () => {
     console.log("Web app listening on port ", portWeb)
