@@ -1,4 +1,13 @@
 'use strict';
+
+/**
+ * @author David ROUMANET <golfy@free.fr>
+ * @version 0.1
+ * This code is experimental and is published only for those who want to use Velbus with NodeJS project.
+ * Use it without any warranty.
+ */
+
+
 // Partie serveur Node.JS classique
 let path = require('path')
 let express = require('express')
