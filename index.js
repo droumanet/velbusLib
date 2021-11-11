@@ -27,7 +27,7 @@ app.get('/', Routeur)
 // Partie Velbus
 let VMBserver = require('./VMBServer.ini')
 let traitement = require('./controllers/traitement')
-let velbusServer = require('./controllers/velbuslib')
+let velbusServer = require('./controllers/VelbusServer')
 velbusServer.VelbusStart(VMBserver.host, VMBserver.port)
 let moduleList = []
 
