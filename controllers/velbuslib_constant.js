@@ -44,7 +44,7 @@ const VMBmodules    =
 //#endregion
 
 //#region VMBfunction AS Velbus functions (code, name)
-VMBfunction    = 
+const VMBfunction    = 
 [{code : 0x00, name :  "VMBInputStatusResponse"},
 {code : 0x01, name :  "VMBRelayOff"},
 {code : 0x02, name :  "VMBRelayOn"},

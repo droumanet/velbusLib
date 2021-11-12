@@ -2,7 +2,7 @@
  * @author David ROUMANET <golfy@free.fr>
  * @description VELBUS Library to use with Velbus NodeJS projects
  * @version 1.0
- * @license CommonCreative BY
+ * @license CommonCreative BY.
  */
 
 
@@ -209,27 +209,43 @@ const toButtons = (valeur, nb) => {
     return response;
 }
 
-// send back name module from code module
+/**
+ * send back name module from code module
+ * @param {Number} code 
+ * @returns name of module
+ */
 const getName = (code) => {
     let result = modules.find(item => Number(item.code) == code);
     if (result !== undefined) return result.name;
     return "unknown";
 };
-// send back code module from name module
+
+/**
+ * send back code module from name module
+ * @param {String} name 
+ * @returns code of module
+ */
 const getCode = (name) => {
     for (let item of modules) {
         if (item.name == name) return Number(item.code);
     }
     return 0x00;
 };
-// send back description module from code or name module
+
+/**
+ * send back description module from code or name module
+ * @param {*} element String or Number. Searched element
+ * @returns Description for the item searched
+ */
 const getDesc = (element) => {
+    // if string then search by name...
     if (typeOf(element) == string) {
         for (let item of modules) {
             if (item.name == element) return item.desc
         }
         return "unknown"
     } else {
+        // ... search by code
         for (let item of modules) {
             if (Number(item.code) == element) return item.desc
         }
