@@ -144,7 +144,7 @@ const VMBfunction =
 /**
  * Checksum is able to calculate the frame checksum
  * @param {Buffer} frame a Velbus frame from 0F xxxxx to 04
- * @param {number} full number removed from frame length
+ * @param {number} full number removed from frame length (default=1)
  * @returns {number} sum all bytes then XOR FF + 1
  */
 const CheckSum = (frame, full = 1) => {
@@ -180,7 +180,11 @@ const Cut = (data) => {
     return table;
 }
 
-// convert a buffer into a table containing hexa code for each byte
+/**
+ * convert a buffer into a table containing hexa code (2 chars) for each byte
+ * @param {Array} donnees 
+ * @returns Hexadecimal string
+ */
 const toHexa = (donnees) => {
     if (donnees !== undefined) {
         let c = '';
@@ -261,7 +265,7 @@ const getFunction = (code) => {
     return "unknown"
 }
 
-const analysing = (element) => {
+const analyze2Texte = (element) => {
     let fctVelbus = Number(element[4])
     let lenVelbus = element[3] & 0x0F
     let adrVelbus = element[2]
@@ -314,21 +318,62 @@ const VMBWrite = (req, res) => {
 }
 
 // ========================= functions VMB RELAY ===================================
+
+/**
+ * Function to create frame for changing relay's state on a module
+ * @param {byte} adr address of module on the bus
+ * @param {int} part part to change on module
+ * @param {*} state  true or false
+ * @returns  Velbus frame ready to emit
+ */
 const relaySet = (adr, part, state) => {
     let trame = new Uint8Array(8);
     trame[0] = VMB_StartX;
     trame[1] = VMB_PrioHi;
     trame[2] = adr;
     trame[3] = 0x02;    // len
-    trame[4] = 0x01;
-    if (state) trame[4] = 0x02;
+    if (state) trame[4] = 0x02; else trame[4] = 0x01;     // true=ON, false=OFF 
     trame[5] = part;
     trame[6] = CheckSum(trame, 0);
     trame[7] = VMB_EndX;
     return trame;
 }
 
+/**
+ * Function to create frame for activating relay's state for a delimited time on a module
+ * @param {byte} adr address of module on the bus
+ * @param {int} part part to change on module
+ * @param {*} timing  value in second, from 1 to FFFFFF (permanent)
+ * @returns  Velbus frame ready to emit
+ */
+ const relayTimer = (adr, part, timing) => {
+    let thigh = timing >> 16 & 0xFF;
+    let tmid = timing >> 8 & 0xFF;
+    let tlow = timing & 0xFF;
+    let trame = new Uint8Array(8);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioHi;
+    trame[2] = adr;
+    trame[3] = 0x05;    // len
+    trame[4] = 0x03;
+    trame[5] = part;
+    trame[6] = thigh;   // timer with 3 bytes
+    trame[7] = tmid;
+    trame[8] = tlow;
+    trame[9] = CheckSum(trame, 0);
+    trame[10] = VMB_EndX;
+    return trame;
+}
+
 // ========================= functions VMB BLIND ====================================
+/**
+ * Function to create frame for moving UP or DOWN blind on a module
+ * @param {byte} adr address of module on the bus
+ * @param {int} part part to move on module (%0011 or %1100 or %1111)
+ * @param {int} state 0: moveUP, other moveDOWN
+ * @param {int} duration in seconds
+ * @returns Velbus frame ready to emit
+ */
 const blindMove = (adr, part, state, duration = 0) => {
     if (state > 0) { state = 0x05 } else { state = 0x06 }
     if (part == 1) { part = 0x03 }
@@ -375,6 +420,9 @@ const discover = (adr) => {
 }
 
 // ========================= SERVER PART ===========================================
+/* This part of code start a TCP connexion to a Velbus TCP server: here you can 
+ * transmit to (or receive from) Velbus BUS. 
+*/
 let connexion = () => {
     console.log("Velbus connexion launched...");
 }
@@ -387,16 +435,19 @@ const VelbusStart = (host, port) => {
 }
 
 client.on('connect', (data) => {
-    console.log("connected to > ", client.remoteAddress, ":", client.remotePort);
+    console.log("connected to Velbus server > ", client.remoteAddress, ":", client.remotePort);
 })
 
+/**
+ * each time Velbus frames are received, this function create a list and analyze them
+ */
 client.on('data', (data) => {
     let entry = {}
     let desc = '', d = '', crc = 0
 
     // RAW data could have multiple Velbus message
     Cut(data).forEach(element => {
-        desc = analysing(element);
+        desc = analyze2Texte(element);
         d = toHexa(element);
         crc = CheckSum(element);
         entry = { "RAW": element, "HEX": d, "CRC": crc, "DESCRIPTION": desc }
@@ -421,6 +472,6 @@ module.exports = {
     relaySet,
     blindMove, blindStop,
     discover,
-    analysing
+    analyze2Texte
 }
 

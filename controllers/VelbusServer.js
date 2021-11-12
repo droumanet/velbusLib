@@ -22,7 +22,7 @@ client.on('data', (data) => {
 
     // RAW data could have multiple Velbus message
     VelbusLib.Cut(data).forEach(element => {
-        desc = VelbusLib.analysing(element);
+        desc = VelbusLib.analyze2Texte(element);
         d = VelbusLib.toHexa(element);
         crc = VelbusLib.CheckSum(element);
         entry = { "RAW": element, "HEX": d, "CRC": crc, "DESCRIPTION": desc }
