@@ -45,9 +45,11 @@ function ChangeRelay() {
 }
 // Fonction to send blindUp or blindDown 1s
 function BlindMove(arg) {
+  console.log("BlindMove() called")
   let modId = Number("0x"+document.getElementById("moduleId").value)
   let part= Number(document.getElementById("part").value);
   let sendMsg = {"address" : modId, "part" : part, "status" : arg}
+  console.log("SocketIO sending ", sendMsg)
   socket.emit('blind', sendMsg);
 }
 

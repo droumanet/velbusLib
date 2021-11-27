@@ -1,9 +1,12 @@
 var VelbusLib = require('./velbuslib')
 
 // ========================= SERVER PART ===========================================
-let connexion = () => {
-    console.log("Velbus connexion launched...");
-}
+/* Reading en writing on socketIO
+ * =================================================================================
+*/
+/*let connexion = () => {
+    console.log("Launching Velbus connexion ...");
+}*/
 
 let net = require("net");
 const { isUndefined } = require('util');
@@ -13,7 +16,7 @@ const VelbusStart = (host, port) => {
 }
 
 client.on('connect', (data) => {
-    console.log("connected to > ", client.remoteAddress, ":", client.remotePort);
+    console.log("connected to server > ", client.remoteAddress, ":", client.remotePort);
 })
 
 client.on('data', (data) => {
@@ -35,9 +38,10 @@ client.on('close', () => {
 });
 
 
+
 const EventEmitter = require('events')
 const VMBEmitter = new EventEmitter()
 module.exports = {
     VMBEmitter,
-    VelbusStart,
+    VelbusStart
 }

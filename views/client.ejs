@@ -1,14 +1,15 @@
 <%- include ('./header') -%>
     <script src="velbusSocketIO.js"></script>
+    <script src="listeModules.js"></script>
     
     <div>
       <input type="text" class="input is-large" id="moduleId" value="2C" placeholder="hexa, like 2C" pattern="[a-fA-F0-9]{1,2}" title="hex value from 00 to FF">
       <input type="text" class="input is-large" id="part" value="1" placeholder="part number (1,3,4...)" pattern="[1-8]" title="number between 1 and 8">
       <input type="button" class="button is-dark is-large" id="btLampe" value="ON" onclick="AllumerLampe()">
       <input type="button" class="button is-dark is-large is-primary" id="btRelay" value="ON" onclick="ChangeRelay()">
-      <input type="button" class="button is-dark is-large" id="btVolet" value="DOWN" onclick="BlindMove('DOWN')">
+      <input type="button" class="button is-dark is-large" id="btVolet" value="DOWN" ontouchstart="BlindMove('DOWN')" ontouchend="BlindMove('STOP')" onmousedown="BlindMove('DOWN')" onmouseup="BlindMove('STOP')">
       <input type="button" class="button is-dark is-large" id="btVolet3" value="STOP" onclick="BlindMove('STOP')">
-      <input type="button" class="button is-dark is-large" id="btVolet2" value="UP" onclick="BlindMove('UP')">
+      <input type="button" class="button is-dark is-large" id="btVolet2" value="UP" ontouchstart="BlindMove('UP')"  ontouchend="BlindMove('STOP')"  onmousedown="BlindMove('UP')" onmouseup="BlindMove('STOP')">
     </div>
     <div>
       <div>Real Time socket Analyzer</div>

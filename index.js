@@ -36,8 +36,9 @@ app.get('/', Routeur)
 // Partie Velbus
 let VMBserver = require('./VMBServer.ini')
 let traitement = require('./controllers/traitement')
-let velbusServer = require('./controllers/VelbusServer')
-velbusServer.VelbusStart(VMBserver.host, VMBserver.port)
+// bad call? let velbusServer = require('./controllers/VelbusServer')
+let velbuslib = require("./controllers/velbuslib")
+velbuslib.VelbusStart(VMBserver.host, VMBserver.port)
 let moduleList = []
 
 
@@ -47,23 +48,23 @@ io.on('connection', (socket) => {
     console.log(`Connecté au client ${socket.id}`)
     socket.on('relay', (msg) => {
         console.log("► ", msg)
-        if (msg.status == "ON") velbusServer.VMBWrite(velbusServer.relaySet(msg.address, msg.part, 1))
-        if (msg.status == "OFF") velbusServer.VMBWrite(velbusServer.relaySet(msg.address, msg.part, 0))
+        if (msg.status == "ON") velbuslib.VMBWrite(velbuslib.relaySet(msg.address, msg.part, 1))
+        if (msg.status == "OFF") velbuslib.VMBWrite(velbuslib.relaySet(msg.address, msg.part, 0))
         console.log("Action sur le relay : ", msg, "address:", msg.address);
     });
     socket.on('blind', (msg) => {
-        if (msg.status == "DOWN") velbusServer.VMBWrite(velbusServer.blindMove(msg.address, msg.part, -1, 10))
-        if (msg.status == "UP") velbusServer.VMBWrite(velbusServer.blindMove(msg.address, msg.part, 1, 10))
-        if (msg.status == "STOP") velbusServer.VMBWrite(velbusServer.blindStop(msg.address, msg.part))
+        if (msg.status == "DOWN") velbuslib.VMBWrite(velbuslib.blindMove(msg.address, msg.part, -1, 10))
+        if (msg.status == "UP") velbuslib.VMBWrite(velbuslib.blindMove(msg.address, msg.part, 1, 10))
+        if (msg.status == "STOP") velbuslib.VMBWrite(velbuslib.blindStop(msg.address, msg.part))
         console.log("Action sur le volet : ", msg)
     })
     socket.on('discover', () => {
         for (let t = 1; t < 255; t++) {
-            velbusServer.discover(t)
+            velbuslib.discover(t)
         }
     })
 })
-velbusServer.VMBEmitter.on("msg", (dataSend) => {
+velbuslib.VMBEmitter.on("msg", (dataSend) => {
     console.log("Envoi ⏩ ", dataSend.RAW)
     io.emit("msg", dataSend)
 });

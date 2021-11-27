@@ -314,6 +314,7 @@ const analyze2Texte = (element) => {
  * @param {*} res not used
  */
 const VMBWrite = (req, res) => {
+    console.log("VelbusLib writing", req)
     client.write(req);
 }
 
@@ -420,13 +421,7 @@ const discover = (adr) => {
 }
 
 // ========================= SERVER PART ===========================================
-/* This part of code start a TCP connexion to a Velbus TCP server: here you can 
- * transmit to (or receive from) Velbus BUS. 
-*/
-let connexion = () => {
-    console.log("Velbus connexion launched...");
-}
-
+// see VelbusServer.js 
 let net = require("net");
 const { isUndefined } = require('util');
 let client = new net.Socket();
@@ -435,14 +430,11 @@ const VelbusStart = (host, port) => {
 }
 
 client.on('connect', (data) => {
-    console.log("connected to Velbus server > ", client.remoteAddress, ":", client.remotePort);
+    console.log("connected to server > ", client.remoteAddress, ":", client.remotePort);
 })
 
-/**
- * each time Velbus frames are received, this function create a list and analyze them
- */
 client.on('data', (data) => {
-    let entry = {}
+    let VMBmsgList = [], entry = {}
     let desc = '', d = '', crc = 0
 
     // RAW data could have multiple Velbus message
@@ -458,12 +450,9 @@ client.on('data', (data) => {
 client.on('close', () => {
     console.log("Closing velbus server connexion");
 });
-
-
+// ==================================================================================
 
 module.exports = {
-    VMBEmitter,
-    VelbusStart,
     CheckSum,
     Cut,
     toHexa,
@@ -472,6 +461,7 @@ module.exports = {
     relaySet,
     blindMove, blindStop,
     discover,
-    analyze2Texte
+    analyze2Texte,
+    VelbusStart, VMBEmitter
 }
 
