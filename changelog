@@ -1,0 +1,7 @@
+
+version 0.2 (2022-02-21)
+ + Velbus synchronisation time (send frame and frame construction)
+ + cron is working
+
+version 0.1 (2021-)
+ * creation
