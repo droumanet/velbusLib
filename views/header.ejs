@@ -1,50 +1,38 @@
-<html>
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
     <script src="/socket.io/socket.io.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
-    <link rel="stylesheet" href="style.css">
+    <style>
+      @import url("https://cdn.jsdelivr.net/npm/minstyle.io@1.1.0/css/minstyle.io.css");
+      /*Doc : https://minstyle.io/docs/*/
+      /* @import url('/css/materialdesignicons.min.css'); ne fonctionne pas */
+      @import url("https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css");
+      @import url("style.css");
+    </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dark-mode-switcher@0.0.1/dist/dark.min.js"></script>
     <title>Velbus client</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
   <body>
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-          <a class="navbar-item" href="https://david.rouma.net">
-            <img src="Arvel.png" height="64">
-          </a>
-      
-          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </a>
-        </div>
-      
-        <div id="navbarBasicExample" class="navbar-menu">
-          <div class="navbar-start">
-            <a class="navbar-item">
-                Accueil
-            </a>
-      
-            <a class="navbar-item">
-                Lampes
-            </a>
-
-            <a class="navbar-item">
-                Volets
-              </a>
-        
-              <a class="navbar-item">
-                Températures
-              </a>
-
-              <a class="navbar-item">
-                Énergie
-              </a>
-
-              <a class="navbar-item" href="/installation">
-                Installation
-              </a>
-          </div>
-        </div>
+    <div class="ms-menu">
+    <div class="ms-menu-logo">
+      <a href="https://david.rouma.net">
+        <img src="Arvel.png" alt="logo Arvel" height="48" />
+      </a>
+    </div>
+    <nav class="ms-menu-link">
+      <input type="checkbox" id="ms-menu-toggle">
+      <label for="ms-menu-toggle" class="ms-menu-icon"><span class="mdi mdi-menu"></span></label>
+      <ul>
+        <a href="/"> <li><span class="mdi mdi-home-automation"></span> Accueil </li></a>
+        <a href="/"> <li><span class="mdi mdi-lamps-outline"></span> Lampes </li></a>
+        <a href="/"> <li><span class="mdi mdi-window-closed"></span> Volets </li></a>
+        <a href="/"> <li><span class="mdi mdi-thermometer"></span> Sondes </li></a>
+        <a href="/"> <li><span class="mdi mdi-electron-framework"></span> Énergie </li></a>
+        <a href="/installation"><li><span class="mdi mdi-desktop-classic"></span> Installation </li></a>
+      </ul>
     </nav>
+    </div>
+  </body>
+</html>

@@ -1,7 +1,4 @@
-body {
-    background-color: #515151;
-    color: white;
-}
+
 div.line {
     border-color: rgb(110, 110, 110);
     border-style: solid;
@@ -18,12 +15,6 @@ div.other {
     color:rgb(200, 200, 200);
     width: 420px;
 }
-/*
-input {
-    width: 200px;
-    height: 50px;
-}
-*/
 
 #VelbusMsg {
     border-color: black;

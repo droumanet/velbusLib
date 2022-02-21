@@ -1,18 +1,62 @@
 <%- include ('./header') -%>
-    <script src="velbusSocketIO.js"></script>
-    <script src="listeModules.js"></script>
-    
-    <div>
-      <input type="text" class="input is-large" id="moduleId" value="2C" placeholder="hexa, like 2C" pattern="[a-fA-F0-9]{1,2}" title="hex value from 00 to FF">
-      <input type="text" class="input is-large" id="part" value="1" placeholder="part number (1,3,4...)" pattern="[1-8]" title="number between 1 and 8">
-      <input type="button" class="button is-dark is-large" id="btLampe" value="ON" onclick="AllumerLampe()">
-      <input type="button" class="button is-dark is-large is-primary" id="btRelay" value="ON" onclick="ChangeRelay()">
-      <input type="button" class="button is-dark is-large" id="btVolet" value="DOWN" ontouchstart="BlindMove('DOWN')" ontouchend="BlindMove('STOP')" onmousedown="BlindMove('DOWN')" onmouseup="BlindMove('STOP')">
-      <input type="button" class="button is-dark is-large" id="btVolet3" value="STOP" onclick="BlindMove('STOP')">
-      <input type="button" class="button is-dark is-large" id="btVolet2" value="UP" ontouchstart="BlindMove('UP')"  ontouchend="BlindMove('STOP')"  onmousedown="BlindMove('UP')" onmouseup="BlindMove('STOP')">
+<script src="velbusSocketIO.js"></script>
+<script src="listeModules.js"></script>
+<h1>Lecture bus</h1>
+<div class="row">
+  <div class="col-sm">
+    <div class="ms-form-group">
+      <label for="moduleId">Module</label>
+      <input
+        type="text" id="moduleId" name="moduleId" value="2C"
+        placeholder="hexa, like 2C" pattern="[a-fA-F0-9]{1,2}"
+        title="hex value from 00 to FF"
+      />
     </div>
-    <div>
-      <div>Real Time socket Analyzer</div>
-      <div id="VelbusMsg">aucun message Velbus</div>
+  </div>
+  <div class="col-sm">
+    <div class="ms-form-group">
+      <label for="part">Part</label>
+    <input
+      type="text" id="part" name="part" value="1" placeholder="part number (1,3,4...)" pattern="[1-8]"
+      title="number between 1 and 8"
+    />
     </div>
-    <%- include ('./footer') -%>
+  </div>
+  <div>
+    <input type="button" id="btLampe" value="ON" onclick="ChangeRelay()" />
+    <input type="button" id="btRelay" value="OFF" onclick="ChangeRelay()" />
+    <input
+      type="button" id="btVolet" value="DOWN"
+      ontouchstart="BlindMove('DOWN')"
+      ontouchend="BlindMove('STOP')"
+      onmousedown="BlindMove('DOWN')"
+      onmouseup="BlindMove('STOP')"
+    />
+    <input
+      type="button" id="btVolet3" value="STOP"
+      onclick="BlindMove('STOP')"
+    />
+    <input
+      type="button" id="btVolet2" value="UP"
+      ontouchstart="BlindMove('UP')"
+      ontouchend="BlindMove('STOP')"
+      onmousedown="BlindMove('UP')"
+      onmouseup="BlindMove('STOP')"
+    />
+  </div>
+</div>
+<div>
+  <div>Real Time socket Analyzer</div>
+  <div class="ms-browser">
+    <div class="ms-tab-browser">
+        <div class="ms-dot red"></div>
+        <div class="ms-dot yellow"></div>
+        <div class="ms-dot green"></div>
+    </div>
+    <div class="ms-content">
+      <div class="ms-content" id="VelbusMsg">aucun message Velbus</div>
+    </div>
+  </div>
+
+</div>
+<%- include ('./footer') -%>

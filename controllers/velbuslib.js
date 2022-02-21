@@ -158,7 +158,7 @@ const CheckSum = (frame, full = 1) => {
     return crc;
 }
 
-// Function Cut : split messages that are in the same frame 0F...msg1...040F...msg2...04
+// Function Cut : split messages that are in the same frame. Example 0F...msg1...040F...msg2...04
 const Cut = (data) => {
     let table = [];
     let longueur, VMBSize;
@@ -318,8 +318,87 @@ const VMBWrite = (req, res) => {
     client.write(req);
 }
 
-// ========================= functions VMB RELAY ===================================
+/**
+ * 
+ * @param {date} d date as new Date()
+ * @returns 0 for monday (d.getDay() would be 1) to 6 for sunday 
+ */
+const VelbusDay = (d) => {
+    if (d.getDay() == 0) return 6
+    else return d.getDay()-1
+}
 
+// ========================= functions VMB MODULES ==================================
+
+/**
+ * scanModule Create a frame to force module to answer
+ * @param {*} adr Address of module
+ * @returns Velbus frame ready to emit
+ */
+const scanModule = (adr) => {
+    let trame = new Uint8Array(6);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioLo;
+    trame[2] = adr;
+    trame[3] = 0x40;    // len 0, RTR on
+    trame[6] = CheckSum(trame, 0);
+    trame[7] = VMB_EndX;
+    return trame;
+}
+const discover = scanModule
+
+/**
+ * VMBsyncTime Create a frame able to synchronize time on Velbus modules
+  * @returns Velbus frame ready to emit
+ */
+ const VMBsyncTime = () => {
+    let d = new Date()
+
+    let trame = new Uint8Array(9);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioLo;
+    trame[2] = 0x00;
+    trame[3] = 0x04;    // len 4, RTR off
+    trame[4] = 0xD8     // synchronize time function
+    trame[5] = VelbusDay(d)
+    trame[6] = d.getHours()
+    trame[7] = d.getMinutes()
+    trame[8] = CheckSum(trame, 0);
+    trame[9] = VMB_EndX;
+    console.log("SyncTime send")
+    VMBWrite(trame)
+}
+/**
+ * synchroTime Create a frame able to synchronize time on Velbus modules
+  * @param {byte} day value between 0 (monday) and 6 (sunday). Use VelbusDay(d) rather d.getDay() because Velbus offset
+  * @param {byte} hour value as 24h format
+  * @param {byte} minuts value between 0 and 59
+  * @returns Velbus frame ready to emit
+  * Nota : if one transmitted value is wrong, then the current date replace them
+ */
+ const synchroTime = (day, hour, minuts) => {
+    let trame = new Uint8Array(9);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioLo;
+    trame[2] = 0x00;
+    trame[3] = 0x04;    // len 4, RTR off
+    trame[4] = 0xD8     // synchronize time function
+    if (day > -1 && day <7 && hour > -1 && hour < 24 && minuts > -1 && minuts < 60) {
+        trame[5] = day
+        trame[6] = hour
+        trame[7] = minuts
+    } else {
+        let d = new Date()
+        trame[5] = VelbusDay(d)
+        trame[6] = d.getHours()
+        trame[7] = d.getMinutes()
+    }
+    trame[8] = CheckSum(trame, 0);
+    trame[9] = VMB_EndX;
+    return trame
+}
+
+// ========================= functions VMB RELAY ===================================
 /**
  * Function to create frame for changing relay's state on a module
  * @param {byte} adr address of module on the bus
@@ -409,16 +488,6 @@ const blindStop = (adr, part) => {
     trame[7] = VMB_EndX
     return trame
 }
-const discover = (adr) => {
-    let trame = new Uint8Array(6)
-    trame[0] = VMB_StartX
-    trame[1] = VMB_PrioLo
-    trame[2] = adr
-    trame[3] = 0x40     // scan
-    trame[4] = CheckSum(trame, 0)
-    trame[5] = VMB_EndX
-    return trame
-}
 
 // ========================= SERVER PART ===========================================
 // see VelbusServer.js 
@@ -437,7 +506,7 @@ client.on('data', (data) => {
     let VMBmsgList = [], entry = {}
     let desc = '', d = '', crc = 0
 
-    // RAW data could have multiple Velbus message
+    // data contains multiples RAW Velbus frames: create collection of individual frame 'VMBmsgList'
     Cut(data).forEach(element => {
         desc = analyze2Texte(element);
         d = toHexa(element);
@@ -462,6 +531,7 @@ module.exports = {
     blindMove, blindStop,
     discover,
     analyze2Texte,
-    VelbusStart, VMBEmitter
+    VelbusStart, VMBEmitter,
+    VMBsyncTime, synchroTime
 }
 

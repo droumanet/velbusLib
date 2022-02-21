@@ -9,34 +9,29 @@
 
 
 // Partie serveur Node.JS classique
+let routes = require('./routes/routes')
 let path = require('path')
 let express = require('express')
 let app = require('express')()
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname + '/views/'))
 app.use(express.static('views'))
+app.use('/', routes)
 
-// TODO - Timer part (see https://crontab.guru)
-let schedule = require('node-schedule');
-let eventHour = schedule.scheduleJob('* */1 * * *', () => {
-    // call energy counter
-})
-let event5min = schedule.scheduleJob('*/5 * * * *', () => {
-    // call temperature status
-})
+// FIXME - problem : CDN is ok, but npm install @mdi/font doesn't works with following line
+// tried with ./node_modules/... , node_modules/, /node_modules
+app.use('/css', express.static(path.join(__dirname, 'node_modules/@mdi/font/css')))
+console.error(path.join(__dirname, 'node_modules/@mdi/font/css'))
 
 let http = require('http').createServer(app);
-let io = require("socket.io")(http);        // create websocket with existing port HTTP
+let io = require("socket.io")(http);        // create websocket with existing port HTTP for web client
 
-let bodyparser = require('body-parser')    // middleware
-let Routeur = require('./routes/routes')
-app.get('/', Routeur)
-// FIXME - problem on /installation (view not accessible)
-
-// Partie Velbus
+// Velbus part
 let VMBserver = require('./VMBServer.ini')
 let traitement = require('./controllers/traitement')
 // bad call? let velbusServer = require('./controllers/VelbusServer')
+
+// in VelbusLib, there is socketIO for communication between Velbus and this application
 let velbuslib = require("./controllers/velbuslib")
 velbuslib.VelbusStart(VMBserver.host, VMBserver.port)
 let moduleList = []
@@ -79,3 +74,30 @@ http.listen(portWeb, () => {
 // Le serveur écoute les requêtes http sur le port 8001 mais aussi les requêtes "socket"
 // server.listen(8001);
 io.listen(http)
+
+// MAIN CODE END ==================================================================================
+
+const { Console } = require('console');
+
+// TODO - Timer part (see https://crontab.guru)
+// Cron format : SS MM HH Day Month weekday
+let schedule = require('node-schedule');
+let launchSync = () => {velbuslib.VMBsyncTime()}
+
+let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
+    // Synchronize time
+    velbuslib.VMBsyncTime()
+    console.log("CRON for Time synchronisation done...")
+    
+})
+
+let everyHour = schedule.scheduleJob('* */1 * * *', () => {
+    // call energy counter
+})
+
+let every5min = schedule.scheduleJob('*/5 * * * *', () => {
+    // call every 5 minutes event like temperatures
+})
+
+
+

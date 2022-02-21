@@ -3,23 +3,18 @@
 */
 
 const express = require('express')
+const Routeur = express.Router()
+
+const CtrlInstall = require('../controllers/CtrlInstall')
 const CtrlPower = require('../controllers/CtrlPower')
 const CtrlRelay = require('../controllers/CtrlRelay')
-const Routeur = express.Router()
 
 let racine = (req, res) => {
     res.render('client')
 }
-let installation = (req, res) => {
-    console.log("*** going to installation.ejs ***")
-    res.render('installation.ejs')
-}
 
-/*
-Routeur.get('/power', CtrlPower.getPower)
-Routeur.get('/scan', Ctrl.scan)
-*/
-Routeur.get('/installation', installation)
+// routes list
+Routeur.get('/installation', CtrlInstall.installation)
 Routeur.get('/', racine)
 Routeur.get('*', racine)
 

@@ -4,6 +4,9 @@
   "description": "test with IO TCP stream coming from Velbus",
   "main": "index.js",
   "dependencies": {
+    "@mdi/font": "^6.5.95",
+    "@mdi/svg": "^6.5.95",
+    "@mdi/util": "^0.3.2",
     "body-parser": "^1.19.0",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
