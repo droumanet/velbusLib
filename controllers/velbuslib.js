@@ -516,7 +516,11 @@ const blindStop = (adr, part) => {
     return trame
 }
 
-// ========================= SERVER PART ===========================================
+
+// ==================================================================================
+// =                          VELBUS SERVER PART                                    =
+// ==================================================================================
+
 // see VelbusServer.js 
 let net = require("net");
 const { isUndefined } = require('util');
@@ -525,7 +529,7 @@ const VelbusStart = (host, port) => {
     client.connect(port, host);
 }
 
-client.on('connect', (data) => {
+client.on('connect', () => {
     console.log("connected to server > ", client.remoteAddress, ":", client.remotePort);
 })
 
@@ -533,7 +537,7 @@ client.on('data', (data) => {
     let VMBmsgList = [], entry = {}
     let desc = '', d = '', crc = 0
 
-    // data contains multiples RAW Velbus frames: create collection of individual frame 'VMBmsgList'
+    // data may contains multiples RAW Velbus frames: create collection of individual frame 'VMBmsgList'
     Cut(data).forEach(element => {
         desc = analyze2Texte(element);
         d = toHexa(element);
