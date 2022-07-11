@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @author David ROUMANET <golfy@free.fr>
  * @version 0.1
@@ -7,6 +5,7 @@
  * Use it without any warranty.
  */
 
+ 'use strict';
 
 // Partie serveur Node.JS classique
 let routes = require('./routes/routes')
@@ -37,21 +36,25 @@ velbuslib.VelbusStart(VMBserver.host, VMBserver.port)
 let moduleList = []
 
 
-// établissement de la connexion
-// let listenClients = io.listen(http);
+// ==================================================================================
+// =                          SocketIO client connexion                             =
+// ==================================================================================
+
+// here is an example on how to connect, from HTML/JS page : let listenClients = io.listen(http);
+
 io.on('connection', (socket) => {
-    console.log(`Connecté au client ${socket.id}`)
+    console.log(`Connected to client ${socket.id}`)
     socket.on('relay', (msg) => {
         console.log("► ", msg)
         if (msg.status == "ON") velbuslib.VMBWrite(velbuslib.relaySet(msg.address, msg.part, 1))
         if (msg.status == "OFF") velbuslib.VMBWrite(velbuslib.relaySet(msg.address, msg.part, 0))
-        console.log("Action sur le relay : ", msg, "address:", msg.address);
+        console.log("Action on relay: ", msg, "address:", msg.address);
     });
     socket.on('blind', (msg) => {
         if (msg.status == "DOWN") velbuslib.VMBWrite(velbuslib.blindMove(msg.address, msg.part, -1, 10))
         if (msg.status == "UP") velbuslib.VMBWrite(velbuslib.blindMove(msg.address, msg.part, 1, 10))
         if (msg.status == "STOP") velbuslib.VMBWrite(velbuslib.blindStop(msg.address, msg.part))
-        console.log("Action sur le volet : ", msg)
+        console.log("Action on blind: ", msg)
     })
     socket.on('discover', () => {
         for (let t = 1; t < 255; t++) {
@@ -59,6 +62,8 @@ io.on('connection', (socket) => {
         }
     })
 })
+
+// when a message is detected on Velbus bus, send it to socketIO client
 velbuslib.VMBEmitter.on("msg", (dataSend) => {
     console.log("Envoi ⏩ ", dataSend.RAW)
     io.emit("msg", dataSend)
@@ -71,7 +76,7 @@ http.listen(portWeb, () => {
 });
 
 
-// Le serveur écoute les requêtes http sur le port 8001 mais aussi les requêtes "socket"
+// Server is listening HTTP (on port 8001) but is listening for request "socketIO" (on port 8002)
 // server.listen(8001);
 io.listen(http)
 

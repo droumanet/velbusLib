@@ -1,7 +1,7 @@
 var VelbusLib = require('./velbuslib')
 
 // ========================= SERVER PART ===========================================
-/* Reading en writing on socketIO
+/* Reading and writing on socketIO
  * =================================================================================
 */
 /*let connexion = () => {

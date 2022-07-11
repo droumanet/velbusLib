@@ -14,6 +14,7 @@
  | VMBStrt | Prio | Addr | RTR/Len | Func | Byte2 | Byte3 | Byte4 | Byte5 | Byte6 | Byte7 | Byte8 | Checksum | VMBEnd |
   --------------------------------------------------------------------------------------------------------------------
   (1) Len = RTR/Len & 0x0F
+  (2) RTR = 1 only for Module Type Request (reception). RTR is Remote Transmit Request
  ======================================================================================================================
 */
 
@@ -265,6 +266,7 @@ const getFunction = (code) => {
     return "unknown"
 }
 
+// debug function
 const analyze2Texte = (element) => {
     let fctVelbus = Number(element[4])
     let lenVelbus = element[3] & 0x0F
@@ -328,7 +330,9 @@ const VelbusDay = (d) => {
     else return d.getDay()-1
 }
 
-// ========================= functions VMB MODULES ==================================
+// ==================================================================================
+// =                          functions VMB ALL                                     =
+// ==================================================================================
 
 /**
  * scanModule Create a frame to force module to answer
@@ -368,6 +372,7 @@ const discover = scanModule
     console.log("SyncTime send")
     VMBWrite(trame)
 }
+
 /**
  * synchroTime Create a frame able to synchronize time on Velbus modules
   * @param {byte} day value between 0 (monday) and 6 (sunday). Use VelbusDay(d) rather d.getDay() because Velbus offset
@@ -398,15 +403,34 @@ const discover = scanModule
     return trame
 }
 
-// ========================= functions VMB RELAY ===================================
+/**
+ * Request Real Time Clock status
+ * @returns Velbus frame ready to emit
+ */
+const requestTime = () => {
+    let trame = new Uint8Array(5);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioLo;
+    trame[2] = 0x00;
+    trame[3] = 0x01;    // len 1, RTR off
+    trame[4] = 0xD7     // request time function
+    trame[5] = CheckSum(trame, 0);
+    trame[6] = VMB_EndX;
+    return trame
+}
+
+// ==================================================================================
+// =                          functions VMB RELAY                                   =
+// ==================================================================================
+
 /**
  * Function to create frame for changing relay's state on a module
  * @param {byte} adr address of module on the bus
  * @param {int} part part to change on module
- * @param {*} state  true or false
+ * @param {*} state  optionnal : true (on) or false (off), default false
  * @returns  Velbus frame ready to emit
  */
-const relaySet = (adr, part, state) => {
+const relaySet = (adr, part, state=false) => {
     let trame = new Uint8Array(8);
     trame[0] = VMB_StartX;
     trame[1] = VMB_PrioHi;
@@ -423,10 +447,10 @@ const relaySet = (adr, part, state) => {
  * Function to create frame for activating relay's state for a delimited time on a module
  * @param {byte} adr address of module on the bus
  * @param {int} part part to change on module
- * @param {*} timing  value in second, from 1 to FFFFFF (permanent)
+ * @param {*} timing  value in second, from 1 to FFFFFF (permanent), default 120 seconds
  * @returns  Velbus frame ready to emit
  */
- const relayTimer = (adr, part, timing) => {
+ const relayTimer = (adr, part, timing=120) => {
     let thigh = timing >> 16 & 0xFF;
     let tmid = timing >> 8 & 0xFF;
     let tlow = timing & 0xFF;
@@ -445,16 +469,19 @@ const relaySet = (adr, part, state) => {
     return trame;
 }
 
-// ========================= functions VMB BLIND ====================================
+// ==================================================================================
+// =                          functions VMB BLIND                                   =
+// ==================================================================================
+
 /**
  * Function to create frame for moving UP or DOWN blind on a module
  * @param {byte} adr address of module on the bus
  * @param {int} part part to move on module (%0011 or %1100 or %1111)
  * @param {int} state 0: moveUP, other moveDOWN
- * @param {int} duration in seconds
+ * @param {int} duration in seconds, default 30 seconds
  * @returns Velbus frame ready to emit
  */
-const blindMove = (adr, part, state, duration = 0) => {
+const blindMove = (adr, part, state, duration = 30) => {
     if (state > 0) { state = 0x05 } else { state = 0x06 }
     if (part == 1) { part = 0x03 }
     else if (part == 2) { part = 0x0C }
