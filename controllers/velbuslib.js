@@ -123,7 +123,7 @@ const VMBfunction =
     { code: 0xEC, name: "VMBTransmitBlindStatus" },
     { code: 0xED, name: "VMB7InputStatusResponse" },
     { code: 0xEE, name: "VMBTransmitDimStatus" },
-    { code: 0xEF, name: "VMBNameResquest" },
+    { code: 0xEF, name: "VMBNameRequest" },
     { code: 0xF0, name: "VMBNamePart1" },
     { code: 0xF1, name: "VMBNamePart2" },
     { code: 0xF2, name: "VMBNamePart3" },
@@ -419,6 +419,20 @@ const requestTime = () => {
     return trame
 }
 
+const requestName = (addr, part) => {
+    let trame = new Uint8Array(8);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioLo;
+    trame[2] = addr;
+    trame[3] = 0x02;    // len 1, RTR off
+    trame[4] = 0xEF;     // request name function
+    trame[5] = part;
+    trame[6] = CheckSum(trame, 0);
+    trame[7] = VMB_EndX;
+    return trame
+}
+
+
 // ==================================================================================
 // =                          functions VMB RELAY                                   =
 // ==================================================================================
@@ -468,6 +482,31 @@ const relaySet = (adr, part, state=false) => {
     trame[10] = VMB_EndX;
     return trame;
 }
+
+// ==================================================================================
+// =                       functions VMB ENERGY COUNTER                             =
+// ==================================================================================
+
+/**
+ * Function to create frame for changing relay's state on a module
+ * @param {byte} adr address of module on the bus
+ * @param {int} part part to change on module
+ * @param {*} state  optionnal : true (on) or false (off), default false
+ * @returns  Velbus frame ready to emit
+ */
+ const CounterRequest = (adr, part) => {
+    let trame = new Uint8Array(8);
+    trame[0] = VMB_StartX;
+    trame[1] = VMB_PrioLo;
+    trame[2] = adr;
+    trame[3] = 0x03;    // len
+    trame[4] = 0xBD;    // Counter Status Request
+    trame[5] = part;
+    trame[6] = CheckSum(trame, 0);
+    trame[7] = VMB_EndX;
+    return trame;
+}
+
 
 // ==================================================================================
 // =                          functions VMB BLIND                                   =
@@ -557,8 +596,9 @@ module.exports = {
     Cut,
     toHexa,
     getName, getCode, getDesc,
-    VMBWrite,
+    VMBWrite, requestName,
     relaySet,
+    CounterRequest,
     blindMove, blindStop,
     discover,
     analyze2Texte,

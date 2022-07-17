@@ -9,17 +9,19 @@
     ================================================================================================
 */
 // initialisation
-var socket = io.connect();
+const socket = io("http://192.168.168.248:8002");
 let nbMsg = 15;
-let tableMsg = new array();
-tableMsg.length = nbMsg;
+let tableMsg = [];
+tableMsg.length = nbMsg;    // force 15 rows even if they're empty
 
 // Function to show only last nbMsg messages
 function listerMsg() {
   let texte = "";
   let part = [];
   let timestamp = Date.now()
-  for(let message of tableMsg) {
+  console.log("et voici "+tableMsg.length+" messages.")
+  for(const message of tableMsg) {
+    console.log("ListerMsg() => ",tableMsg)
     part[0] = new Date(Date.now()).toLocaleString()
     part[1] = message.DESCRIPTION
     part[2] = message.HEX
@@ -56,8 +58,10 @@ function BlindMove(arg) {
 }
 
 socket.on('msg', (msg) => {
-  // console.log(msg);
+  console.log(msg);
   tableMsg.push(msg);
+  console.log(tableMsg.length)
   if (tableMsg.length > nbMsg) tableMsg.shift();
+  console.log(tableMsg.length)
   document.getElementById('VelbusMsg').innerHTML = listerMsg()
 })

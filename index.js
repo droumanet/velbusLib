@@ -43,7 +43,7 @@ let moduleList = []
 // here is an example on how to connect, from HTML/JS page : let listenClients = io.listen(http);
 
 io.on('connection', (socket) => {
-    console.log(`Connected to client ${socket.id}`)
+    console.log(`SocketIO Connected to @IP:${socket.request.connection.remoteAddress} (client ${socket.id})`)
     socket.on('relay', (msg) => {
         console.log("► ", msg)
         if (msg.status == "ON") velbuslib.VMBWrite(velbuslib.relaySet(msg.address, msg.part, 1))
@@ -65,7 +65,7 @@ io.on('connection', (socket) => {
 
 // when a message is detected on Velbus bus, send it to socketIO client
 velbuslib.VMBEmitter.on("msg", (dataSend) => {
-    console.log("Envoi ⏩ ", dataSend.RAW)
+    console.log("Envoi sur SocketIO ⏩ ", dataSend.RAW)
     io.emit("msg", dataSend)
 });
 
