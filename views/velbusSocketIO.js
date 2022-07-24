@@ -23,8 +23,13 @@ function listerMsg() {
   for(const message of tableMsg) {
     console.log("ListerMsg() => ",tableMsg)
     part[0] = new Date(Date.now()).toLocaleString()
-    part[1] = message.DESCRIPTION
-    part[2] = message.HEX
+    if (message === undefined) {
+      part[1] = "(empty)"
+      part[2] = "(empty)"
+    } else {
+      part[1] = message.DESCRIPTION
+      part[2] = message.HEX
+    }
     texte = texte + '<div class="line"><div class="msg">'+part[0]+" "+part[1]+"</div>" + '<div class="other">'+part[2]+"</div><div></div></div>\n";
   }
 
@@ -64,4 +69,9 @@ socket.on('msg', (msg) => {
   if (tableMsg.length > nbMsg) tableMsg.shift();
   console.log(tableMsg.length)
   document.getElementById('VelbusMsg').innerHTML = listerMsg()
+})
+
+socket.on('connect_failed', function() {
+  document.write("Sorry, there seems to be an issue with the connection!");
+
 })
