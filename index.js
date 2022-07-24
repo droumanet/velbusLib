@@ -44,6 +44,10 @@ let moduleList = []
 
 io.on('connection', (socket) => {
     console.log(`SocketIO Connected to @IP:${socket.request.connection.remoteAddress} (client ${socket.id})`)
+    socket.on("energy", (msg) => {
+        console.log("► Energy request transmitted (socketIO client)")
+        velbuslib.VMBWrite(velbuslib.CounterRequest(msg.address, msg.part))
+    })
     socket.on('relay', (msg) => {
         console.log("► ", msg)
         if (msg.status == "ON") velbuslib.VMBWrite(velbuslib.relaySet(msg.address, msg.part, 1))
@@ -96,8 +100,12 @@ let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
     
 })
 
-let everyHour = schedule.scheduleJob('* */1 * * *', () => {
-    // call energy counter
+let everyHour = schedule.scheduleJob('*/1 * * * *', () => {
+    // call every hour energy counter
+    velbuslib.VMBWrite(velbuslib.CounterRequest(0x40, 0xFF))    
+    velbuslib.VMBWrite(velbuslib.CounterRequest(0x06, 0xFF))    
+    console.log("CRON for Energy's counters request...", velbuslib.CounterRequest(0x40, 0xF))
+
 })
 
 let every5min = schedule.scheduleJob('*/5 * * * *', () => {

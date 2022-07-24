@@ -18,7 +18,8 @@
  ======================================================================================================================
 */
 
-const EventEmitter = require('events')
+const EventEmitter = require('events');
+const { write } = require('fs');
 const VMBEmitter = new EventEmitter()
 
 const VMB_StartX = 0x0F;
@@ -315,8 +316,8 @@ const analyze2Texte = (element) => {
  * @param {Buffer} req RAW format Velbus frame
  * @param {*} res not used
  */
-const VMBWrite = (req, res) => {
-    console.log("VelbusLib writing", req)
+const VMBWrite = (req) => {
+    console.log("VelbusLib writing", toHexa(req))
     client.write(req);
 }
 
@@ -370,7 +371,7 @@ const discover = scanModule
     trame[8] = CheckSum(trame, 0);
     trame[9] = VMB_EndX;
     console.log("SyncTime send")
-    VMBWrite(trame)
+    return trame
 }
 
 /**
@@ -413,10 +414,10 @@ const requestTime = () => {
     trame[1] = VMB_PrioLo;
     trame[2] = 0x00;
     trame[3] = 0x01;    // len 1, RTR off
-    trame[4] = 0xD7     // request time function
+    trame[4] = 0xD7;    // request time function
     trame[5] = CheckSum(trame, 0);
     trame[6] = VMB_EndX;
-    return trame
+    return trame;
 }
 
 const requestName = (addr, part) => {
@@ -429,7 +430,7 @@ const requestName = (addr, part) => {
     trame[5] = part;
     trame[6] = CheckSum(trame, 0);
     trame[7] = VMB_EndX;
-    return trame
+    return trame;
 }
 
 
@@ -495,15 +496,16 @@ const relaySet = (adr, part, state=false) => {
  * @returns  Velbus frame ready to emit
  */
  const CounterRequest = (adr, part) => {
-    let trame = new Uint8Array(8);
+    let trame = new Uint8Array(9);
     trame[0] = VMB_StartX;
     trame[1] = VMB_PrioLo;
     trame[2] = adr;
     trame[3] = 0x03;    // len
     trame[4] = 0xBD;    // Counter Status Request
     trame[5] = part;
-    trame[6] = CheckSum(trame, 0);
-    trame[7] = VMB_EndX;
+    trame[6] = 0;
+    trame[7] = CheckSum(trame, 0);
+    trame[8] = VMB_EndX;
     return trame;
 }
 

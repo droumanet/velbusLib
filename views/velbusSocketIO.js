@@ -52,6 +52,10 @@ function ChangeRelay() {
     etat.value = "ON"
   }
 }
+function EnergyRequest() {
+  let sendMsg = { "address": 0x40, "part": 0xF }
+  socket.emit('energy', sendMsg);
+}
 // Fonction to send blindUp or blindDown 1s
 function BlindMove(arg) {
   console.log("BlindMove() called")

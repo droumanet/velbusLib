@@ -5,9 +5,9 @@
 <div class="row">
   <div class="col-sm">
     <div class="ms-form-group">
-      <label for="moduleId">Module</label>
+      <label for="moduleId">Module (2E-1 = lampe bureau)</label>
       <input
-        type="text" id="moduleId" name="moduleId" value="2C"
+        type="text" id="moduleId" name="moduleId" value="2E"
         placeholder="hexa, like 2C" pattern="[a-fA-F0-9]{1,2}"
         title="hex value from 00 to FF"
       />
@@ -25,6 +25,7 @@
   <div>
     <input type="button" id="btLampe" value="ON" onclick="ChangeRelay()" />
     <input type="button" id="btRelay" value="OFF" onclick="ChangeRelay()" />
+    <input type="button" id="btEnergy" value="Energy Req" onclick="EnergyRequest()" />
     <input
       type="button" id="btVolet" value="DOWN"
       ontouchstart="BlindMove('DOWN')"

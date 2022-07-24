@@ -1,0 +1,19 @@
+<%- include ('./header') -%>
+<script src="velbusSocketIO.js"></script>
+<script src="listeModules.js"></script>
+<h1>Analyseur</h1>
+<div>
+  <div>Real Time socket Analyzer</div>
+  <div class="ms-browser">
+    <div class="ms-tab-browser">
+        <div class="ms-dot red"></div>
+        <div class="ms-dot yellow"></div>
+        <div class="ms-dot green"></div>
+    </div>
+    <div class="ms-content">
+      <div class="ms-content" id="VelbusMsg">aucun message Velbus</div>
+    </div>
+  </div>
+
+</div>
+<%- include ('./footer') -%>
