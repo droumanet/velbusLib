@@ -92,7 +92,7 @@ let schedule = require('node-schedule');
 let launchSync = () => {velbuslib.VMBsyncTime()}
 
 let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
-    // Synchronize time
+    // Synchronize time each day at 5:00 (AM)
     velbuslib.VMBsyncTime()
     console.log("CRON for Time synchronisation done...")
     
@@ -104,18 +104,22 @@ let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
 let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
     // TODO: call every minute energy counter
     // FORNOW: call every 10 secondes for debuging
-    console.log(Date.now().toLocaleString())
-    velbuslib.VMBRequestEnergy(0x06, 1)
-    .then((msg) => console.log("CRON for PAC  : ", msg, new Date(msg.timestamp).toLocaleString()))
-    velbuslib.VMBRequestEnergy(0x40, 1)
-    .then((msg) => console.log("CRON for clim  : ", msg, new Date(msg.timestamp).toLocaleString()))
-    velbuslib.VMBRequestEnergy(0x40, 2)
-    .then((msg) => console.log("CRON for Domo  : ", msg, new Date(msg.timestamp).toLocaleString()))
 
-    //console.log("CRON for PAC  : ", velbuslib.VMBRequestEnergy(0x06, 1))
-    //console.log("CRON for Clim : ", velbuslib.VMBRequestEnergy(0x40, 1))
-    //console.log("CRON for Domo : ", velbuslib.VMBRequestEnergy(0x40, 2))
-   
+    let d = new Date()
+    console.log(d.toISOString())
+    velbuslib.VMBRequestEnergy(0x06, 1)
+    .then((msg) => console.log("CRON for PAC  : ", msg, new Date(msg.timestamp).toISOString()))
+    velbuslib.VMBRequestEnergy(0x06, 3)
+    .then((msg) => console.log("CRON for EV Charge  : ", msg, new Date(msg.timestamp).toISOString()))
+    velbuslib.VMBRequestEnergy(0x40, 1)
+    .then((msg) => console.log("CRON for clim  : ", msg, new Date(msg.timestamp).toISOString()))
+    velbuslib.VMBRequestEnergy(0x40, 2)
+    .then((msg) => console.log("CRON for domo  : ", msg, new Date(msg.timestamp).toISOString()))
+
+
+    velbuslib.VMBRequestTemp(0x7C, 1)
+    .then((msg) => console.log("Temp for Grenier  : ", msg, new Date(msg.timestamp).toISOString()))
+
 })
 
 let every5min = schedule.scheduleJob('*/5 * * * *', () => {
