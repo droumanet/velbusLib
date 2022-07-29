@@ -23,6 +23,7 @@ const { write, WriteStream } = require('fs');
 const VMBEmitter = new EventEmitter()
 
 // General list for event
+let VMBmodule = new Map()
 let VMBNameStatus = new Map()
 let VMBTempStatus = new Map()
 let VMBEnergyStatus = new Map()
@@ -165,12 +166,13 @@ const CheckSum = (frame, full = 1) => {
 	return crc;
 }
 
-// Function Cut : split messages that are in the same frame. Example 0F...msg1...040F...msg2...04
+// Function Cut : split messages that are in the same frame. Example 0F...msg1...04 0F...msg2...04
 const Cut = (data) => {
 	let table = [];
 	let longueur, VMBSize;
+	let i=0;
 	// search for 0x0F header, then look at size byte and check if end byte is in good place
-	for (let i = 0; i < data.length; i++) {
+	while (i < data.length) {
 		if (data[i] == 0x0F && i + 3 < data.length) {
 			longueur = data[i + 3];
 			VMBSize = longueur + 3 + 1 + 1;     // message length + offset 3 + checksum + end byte
@@ -183,6 +185,7 @@ const Cut = (data) => {
 				// console.log("octet à longueur VMBSize : ",data[i+VMBSize])
 			}
 		}
+		i++;
 	}
 	return table;
 }
@@ -192,7 +195,7 @@ const Cut = (data) => {
  * @param {Array} donnees 
  * @returns Hexadecimal string
  */
-const toHexa = (donnees) => {
+function toHexa(donnees) {
 	if (donnees !== undefined) {
 		let c = '';
 		let dhex = [];
@@ -206,7 +209,7 @@ const toHexa = (donnees) => {
 }
 
 // convert a binary value into a string with number or . (ex 5 => 1.4.....)
-const toButtons = (valeur, nb) => {
+function toButtons(valeur, nb) {
 	let response = "";
 	let x = 1;
 	for (let t = 1; t < (nb + 1); t++) {
@@ -221,14 +224,14 @@ const toButtons = (valeur, nb) => {
 }
 
 // Convert Binary digit to human part number (0b0100 => 3)
-const Bin2Part = (binValue) => {
+function Bin2Part(binValue, offset=0) {
 	for (let t=1; t <9; t++) {
-		if (2**(t-1) == binValue) return t
+		if (2**(t-1) == binValue) return t+offset
 	}
-	return 0
+	return offset
 }
 // Convert humar part number to binary element (5 => 0b10000)
-const Part2Bin = (partValue) => {
+function Part2Bin(partValue) {
 	return 2**(partValue-1)
 }
 
@@ -283,14 +286,21 @@ const getFunction = (code) => {
 	if (result !== undefined) return result.name
 	return "unknown"
 }
+const localModuleName = (k) => {
+	let myModule = VMBNameStatus.get(k)
+	if (myModule == undefined) return "****"
+	return myModule.name
+}
+
 
 // debug function
 const analyze2Texte = (element) => {
 	let fctVelbus = Number(element[4])
 	let lenVelbus = element[3] & 0x0F
 	let adrVelbus = element[2]
-	let texte = "Capteur : " + adrVelbus.toString(16) + "  " + getFunction(fctVelbus) + " (" + fctVelbus.toString(16).toUpperCase() + ") ► "
+	let texte = adrVelbus.toString(16) + "  " + getFunction(fctVelbus) + " (" + fctVelbus.toString(16).toUpperCase() + ") ► "
 	let buttonOn = ""
+	let keyModule = ""
 
 	switch (fctVelbus) {
 		case 0x00:
@@ -300,20 +310,52 @@ const analyze2Texte = (element) => {
 		case 0xBE:
 			// Read VMB7IN counter
 			let division = (element[5] >> 2) * 100;
-			let part = (element[5] & 0x7);   // part is 0 to 3
+			let part = (element[5] & 0x3); 
+			
+			// part is 0 to 3
+			keyModule=element[2]+"-"+(part+1)
 			let compteur = (element[6] * 0x1000000 + element[7] * 0x10000 + element[8] * 0x100 + element[9]) / division;
 			compteur = Math.round(compteur * 1000) / 1000;
 			let conso = 0;
 			if (element[10] != 0xFF && element[11] != 0xFF) {
 				conso = Math.round((1000 * 1000 * 3600 / (element[10] * 256 + element[11])) / division * 10) / 10;
 			}
-			texte += "  " + compteur + " KW, (Instantané :" + conso + " W)";
+			texte += "  " + compteur + " KW, (Instantané :" + conso + " W) "+localModuleName(keyModule) + "   "+keyModule;
 			break;
 		case 0xE6:
-			texte += "  " + TempCurrentCalculation(element) + "°C";
+			keyModule=adrVelbus+"-1"
+			texte += "  " + TempCurrentCalculation(element) + "°C "+localModuleName(keyModule);
 			break;
 		case 0xEA:
 			texte += "  " + Number(element[8]) / 2 + "°C";
+			break;
+		case 0xF0:
+		case 0xF1:
+		case 0xF2:
+			let key = adrVelbus+"-"+Bin2Part(element[5])
+			let myModule = VMBNameStatus.get(key)
+			let max=6
+			if (myModule == undefined) {
+				VMBNameStatus.set(key, {"address":element[2],"name":"", "n1":"", "n2":"", "n3":""})
+				myModule = VMBNameStatus.get(key)
+			}
+			if (fctVelbus == 0xF2) max=4
+
+			let n=new Array()
+			let idx = fctVelbus-0xF0
+			n[0]=myModule.n1
+			n[1]=myModule.n2
+			n[2]=myModule.n3
+			n[idx]=""
+			
+			console.log("NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
+			for (let t=0; t<max; t++) {
+				if (element[6+t] != 0xFF) {
+					n[idx]=n[idx]+String.fromCharCode(element[6+t])
+				}
+			}
+			VMBNameStatus.set(key, {"address":element[2],"name":n[0]+n[1]+n[2], "n1":n[0], "n2":n[1], "n3":n[2]})
+			texte += " Transmit it name '"+n[0]+n[1]+n[2]+"'"
 			break;
 		case 0xFB:
 			buttonOn = toButtons(element[7], 4);
@@ -325,53 +367,6 @@ const analyze2Texte = (element) => {
 
 	// console.log(texte)
 	return texte;
-}
-
-/**
- * Analyze a frame and store result in VMBStatus array as JSON object
- * @param {*} element 
- * @returns VMBStatus array size
- */
-function AnalyzeStatus(element) {
-	let fctVelbus = Number(element[4])
-	let lenVelbus = element[3] & 0x0F
-	let adrVelbus = element[2]
-	let VMBobject
-	let part
-	let tstamp = Date.now()
-
-
-	switch (fctVelbus) {
-		case 0x00:
-			part = 0 // soustraction de ON et LONG PRESS ?
-			VMBobject = { "TimeStamp": tstamp, "Address": element[2], "Part": part, "Function": fctVelbus, "ButtonON": toButtons(element[5], 8) }
-			break;
-		case 0xBE:
-			// Read VMB7IN counter
-			let division = (element[5] >> 2) * 100;
-			part = (element[5] & 0x7);   // part is 0 to 3
-			let compteur = (element[6] * 0x1000000 + element[7] * 0x10000 + element[8] * 0x100 + element[9]) / division;
-			compteur = Math.round(compteur * 1000) / 1000;
-			let conso = 0;
-			if (element[10] != 0xFF && element[11] != 0xFF) {
-				conso = Math.round((1000 * 1000 * 3600 / (element[10] * 256 + element[11])) / division * 10) / 10;
-			}
-			VMBobject = { "TimeStamp": tstamp, "Address": element[2], "Part": part, "Function": fctVelbus, "Index": compteur, "Power": conso, "Pulse": division }
-			break;
-		case 0xE6:
-			VMBobject = { "TimeStamp": tstamp, "Address": element[2], "Part": part, "Function": fctVelbus, "TempCurrent": Number(element[5]) / 2, "resolution":(element[6]>>5).toString(2) }
-			break;
-		case 0xEA:
-			VMBobject = { "TimeStamp": tstamp, "Address": element[2], "Part": part, "Function": fctVelbus, "TempCurrent": Number(element[8]) / 2 }
-			break;
-		case 0xFB:
-			VMBobject = { "TimeStamp": tstamp, "Address": element[2], "Part": part, "Function": fctVelbus, "ButtonON": toButtons(element[7], 4) }
-			break;
-		default:
-			break;
-	}
-	if (VMBobject != undefined) VMBEnergyStatus.push(VMBobject)
-	return VMBEnergyStatus.length;
 }
 
 /**
@@ -415,6 +410,7 @@ const scanModule = (adr) => {
 	return trame;
 }
 const discover = scanModule
+
 
 /**
  * VMBsyncTime Create a frame able to synchronize time on Velbus modules
@@ -553,7 +549,7 @@ const relayTimer = (adr, part, timing = 120) => {
 // =                       functions VMB TEMPERATURE                             =
 // ==================================================================================
 
-const TempRequest = (addr, part, interval=0) => {
+const TempRequest = (addr, part=1, interval=0) => {
 	let trame = new Uint8Array(8);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -697,6 +693,8 @@ function TempMaxCalculation(msg) {
 async function sleep(timeout) {
 	await new Promise(r => setTimeout(r, timeout));
 }
+
+// ☢️ GESTION ENERGIE
 function surveyTempStatus() {
 	VMBEmitter.on("TempStatus", (msg) => {
 		if (msg.RAW[4] == 0xE6) {
@@ -705,7 +703,11 @@ function surveyTempStatus() {
 			let maxT = TempMaxCalculation(msg.RAW)
 			let key = msg.RAW[2] + "-1"
 			VMBTempStatus.set(key, { "current": currentT, "min": minT, "max":maxT, "timestamp": Date.now() })
-			console.log("Tableau TempStatus : ", VMBTempStatus)
+			if (VMBNameStatus.get(key) == undefined) {
+				VMBWrite(requestName(msg.RAW[2], 1))
+			}
+			// console.log("Tableau TempStatus : ", VMBTempStatus)
+			console.log("Tableau NameStatus : ", VMBNameStatus)
 		}
 	})
 }
@@ -718,42 +720,49 @@ function surveyEnergyStatus() {
 		if (msg.RAW[4] == 0xBE) {
 			let rawcounter = EnergyIndexCalculation(msg)
 			let power = EnergyPowerCalculation(msg)
-			let key = msg.RAW[2] + "-" + (msg.RAW[5] & 3)
+			let part = (msg.RAW[5] & 3)+1
+			let key = msg.RAW[2] + "-" + part
 			VMBEnergyStatus.set(key, { "index": rawcounter, "power": power, "timestamp": Date.now() })
-			console.log("Tableau EnergyStatus : ", VMBEnergyStatus)
+			if (VMBNameStatus.get(key) == undefined) {
+				console.log("Demande de nom pour ", msg.RAW[2]+"-"+part)
+				VMBWrite(requestName(msg.RAW[2], Part2Bin(part)))
+			}
+			// console.log("Tableau EnergyStatus : ", VMBEnergyStatus)
 
 		}
 	})
 }
 
-const VMBRequestTemp = async (adr, part) => {
-	let trame = TempRequest(adr, part)
-	VMBWrite(trame)
-	await sleep(200)
-	if (VMBTempStatus.get(adr + "-" + part) != undefined) return VMBTempStatus.get(adr + "-" + part)
-	return {"currentT":1000, "min":1000, "max":1000, "timestamp":Date.now()}
+// 🌡️ GESTION TEMPERATURE
+async function VMBRequestTemp(adr, part) {
+	let trame = TempRequest(adr, part);
+	VMBWrite(trame);
+	await sleep(200);
+	if (VMBTempStatus.get(adr + "-" + part) != undefined)
+		return VMBTempStatus.get(adr + "-" + part);
+	return { "currentT": 1000, "min": 1000, "max": 1000, "timestamp": Date.now() };
 
 }
-const VMBRequestEnergy = async (adr, part) => {
-	let trame
+
+async function VMBRequestEnergy(adr, part) {
+	let trame;
 	if (part < 5) {
-		trame = CounterRequest(adr, Part2Bin(part))
-		VMBWrite(trame)
-		await sleep(200)		// FIXME: VMBEmitter isn't synchronous, need to wait
-		return VMBEnergyStatus.get(adr + "-" + (part - 1))
+		trame = CounterRequest(adr, Part2Bin(part)); // need to change 1 => 1, 2 => 2, 3 => 4 and 4 => 8
+		VMBWrite(trame);
+		await sleep(200); // VMBEmitter isn't synchronous, need to wait
+		return VMBEnergyStatus.get(adr + "-" + part);
 	} else {
 		// part is 0xF or more
-		let tableModule = []
-		for (let t=1; t<5; t++) {
-			trame = CounterRequest(adr, t)
-			VMBWrite(trame)
-		}
-		await sleep(200)
-		tableModule.push(VMBEnergyStatus.get(adr + "-0"))
-		tableModule.push(VMBEnergyStatus.get(adr + "-1"))
-		tableModule.push(VMBEnergyStatus.get(adr + "-2"))
-		tableModule.push(VMBEnergyStatus.get(adr + "-3"))
-		return tableModule
+		let tableModule = [];
+		trame = CounterRequest(adr, part || 0xF);
+		VMBWrite(trame);
+
+		await sleep(200);
+		tableModule.push(VMBEnergyStatus.get(adr + "-1"));
+		tableModule.push(VMBEnergyStatus.get(adr + "-2"));
+		tableModule.push(VMBEnergyStatus.get(adr + "-3"));
+		tableModule.push(VMBEnergyStatus.get(adr + "-4"));
+		return tableModule;
 	}
 
 }
@@ -789,8 +798,6 @@ client.on('data', (data) => {
 		desc = analyze2Texte(element);
 		console.log(desc)	// use as debug
 
-		d = toHexa(element);
-		crc = CheckSum(element);
 		VMBmessage = { "RAW": element, "Description": desc, "TimeStamp": Date.now(), "Address": element[2], "Function": element[4] }
 		VMBEmitter.emit("msg", VMBmessage);
 
