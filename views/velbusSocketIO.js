@@ -1,18 +1,37 @@
 /* =================================================================================================
     Client side program: enable socketIO for direct communication with VelbusServer
     Author: David ROUMANET
-    version: 0.5
-    date: 2022-02-14
+    version: 0.6
 
     News:
-    2022-02-14  Add this header
-    ================================================================================================
+    2022-07-28  v0.6 
+    * Message format : { "RAW": el, "Description": desc, "TimeStamp": Date.now(), "Address":el[2], "Function":el[4] }
+    + Button EnergyRequest
+
+    2022-02-14  v0.5 
+    + Add this header
+     ================================================================================================
 */
 // initialisation
 const socket = io("http://192.168.168.248:8002");
 let nbMsg = 15;
 let tableMsg = [];
 tableMsg.length = nbMsg;    // force 15 rows even if they're empty
+
+function toHexa(donnees) {
+  console.log("toHexa ", donnees)
+
+	if (donnees !== undefined) {
+		let c = '';
+		let dhex = [];
+		for (const donnee of donnees) {
+			c = donnee.toString(16).toUpperCase();
+			if (c.length < 2) c = '0' + c;
+			dhex.push(c);
+		}
+		return dhex;
+	} else { return "" }
+}
 
 // Function to show only last nbMsg messages
 function listerMsg() {
@@ -27,8 +46,8 @@ function listerMsg() {
       part[1] = "(empty)"
       part[2] = "(empty)"
     } else {
-      part[1] = message.DESCRIPTION
-      part[2] = message.HEX
+      part[1] = message.Description
+      part[2] = "" // FIXME: toHexa(message.RAW)
     }
     texte = texte + '<div class="line"><div class="msg">'+part[0]+" "+part[1]+"</div>" + '<div class="other">'+part[2]+"</div><div></div></div>\n";
   }
@@ -67,9 +86,9 @@ function BlindMove(arg) {
 }
 
 socket.on('msg', (msg) => {
-  console.log(msg);
+  console.log("Received message : ", msg);
   tableMsg.push(msg);
-  console.log(tableMsg.length)
+  console.log("Table size : ", tableMsg.length)
   if (tableMsg.length > nbMsg) tableMsg.shift();
   console.log(tableMsg.length)
   document.getElementById('VelbusMsg').innerHTML = listerMsg()

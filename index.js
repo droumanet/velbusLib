@@ -6,6 +6,7 @@
  */
 
  'use strict';
+ 
 
 // Partie serveur Node.JS classique
 let routes = require('./routes/routes')
@@ -69,7 +70,7 @@ io.on('connection', (socket) => {
 
 // when a message is detected on Velbus bus, send it to socketIO client
 velbuslib.VMBEmitter.on("msg", (dataSend) => {
-    console.log("Envoi sur SocketIO ⏩ ", dataSend.RAW)
+    console.log("Send SocketIO ⏩ ", dataSend.RAW)
     io.emit("msg", dataSend)
 });
 
@@ -87,9 +88,6 @@ io.listen(http)
 // MAIN CODE END ==================================================================================
 
 const { Console } = require('console');
-
-// TODO - Timer part (see https://crontab.guru)
-// Cron format : SS MM HH Day Month weekday
 let schedule = require('node-schedule');
 let launchSync = () => {velbuslib.VMBsyncTime()}
 
@@ -100,12 +98,24 @@ let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
     
 })
 
-let everyHour = schedule.scheduleJob('*/1 * * * *', () => {
-    // call every hour energy counter
-    velbuslib.VMBWrite(velbuslib.CounterRequest(0x40, 0xFF))    
-    velbuslib.VMBWrite(velbuslib.CounterRequest(0x06, 0xFF))    
-    console.log("CRON for Energy's counters request...", velbuslib.CounterRequest(0x40, 0xF))
+// Timer part (see https://crontab.guru)
+// Cron format : SS MM HH Day Month weekday
 
+let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
+    // TODO: call every minute energy counter
+    // FORNOW: call every 10 secondes for debuging
+    console.log(Date.now().toLocaleString())
+    velbuslib.VMBRequestEnergy(0x06, 1)
+    .then((msg) => console.log("CRON for PAC  : ", msg, new Date(msg.timestamp).toLocaleString()))
+    velbuslib.VMBRequestEnergy(0x40, 1)
+    .then((msg) => console.log("CRON for clim  : ", msg, new Date(msg.timestamp).toLocaleString()))
+    velbuslib.VMBRequestEnergy(0x40, 2)
+    .then((msg) => console.log("CRON for Domo  : ", msg, new Date(msg.timestamp).toLocaleString()))
+
+    //console.log("CRON for PAC  : ", velbuslib.VMBRequestEnergy(0x06, 1))
+    //console.log("CRON for Clim : ", velbuslib.VMBRequestEnergy(0x40, 1))
+    //console.log("CRON for Domo : ", velbuslib.VMBRequestEnergy(0x40, 2))
+   
 })
 
 let every5min = schedule.scheduleJob('*/5 * * * *', () => {
