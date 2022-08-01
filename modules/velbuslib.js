@@ -27,9 +27,11 @@
  =================================================================================================================== */
 
 import EventEmitter from 'events';
+import { VMBmodule } from './velbuslib_class.mjs';
 import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
-import { VMBmodule } from './VMBModuleClass.mjs';
-import * as Blind from './primitives_blind.mjs'
+import * as Blind from './velbuslib_blind.mjs'
+import { requestTemp } from './velbuslib_temp.mjs';
+import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime} from './velbuslib_generic.mjs';
 
 const VMBEmitter = new EventEmitter()
 
@@ -273,16 +275,7 @@ function analyze2Texte(element) {
 	return texte;
 }
 
-/**
- * This method write a Velbus frame to the TCP connexion
- * @param {Buffer} req RAW format Velbus frame
- * @param {*} res not used
- */
-async function VMBWrite(req) {
-	console.error('\x1b[32m', "VelbusLib writing", toHexa(req).join(), '\x1b[0m')
-	VelbusConnexion.write(req);
-	await sleep(10)
-}
+
 
 /**
  * Convert JS day to Velbus day (offset problem)
@@ -299,100 +292,14 @@ function VelbusDay(d) {
 // ============================================================================================================
 
 /**
- * scanModule Create a frame to force module to answer
- * @param {*} adr Address of module
- * @returns Velbus frame ready to emit
+ * This method write a Velbus frame to the TCP connexion
+ * @param {Buffer} req RAW format Velbus frame
+ * @param {*} res not used
  */
-function scanModule(adr) {
-	let trame = new Uint8Array(6);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = adr;
-	trame[3] = 0x40;    // len 0, RTR on
-	trame[6] = CheckSum(trame, 0);
-	trame[7] = VMB_EndX;
-	return trame;
-}
-
-/**
- * VMBsyncTime Create a frame able to synchronize time on Velbus modules
-  * @returns Velbus frame ready to emit
- */
-function VMBsyncTime() {
-	let d = new Date()
-
-	let trame = new Uint8Array(9);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = 0x00;
-	trame[3] = 0x04;    // len 4, RTR off
-	trame[4] = 0xD8     // synchronize time function
-	trame[5] = VelbusDay(d)
-	trame[6] = d.getHours()
-	trame[7] = d.getMinutes()
-	trame[8] = CheckSum(trame, 0);
-	trame[9] = VMB_EndX;
-	console.log("SyncTime send")
-	return trame
-}
-
-/**
- * synchroTime Create a frame able to synchronize time on Velbus modules
-  * @param {byte} day value between 0 (monday) and 6 (sunday). Use VelbusDay(d) rather d.getDay() because Velbus offset
-  * @param {byte} hour value as 24h format
-  * @param {byte} minuts value between 0 and 59
-  * @returns Velbus frame ready to emit
-  * Nota : if one transmitted value is wrong, then the current date replace them
- */
-function synchroTime(day, hour, minuts) {
-	let trame = new Uint8Array(9);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = 0x00;
-	trame[3] = 0x04;    // len 4, RTR off
-	trame[4] = 0xD8     // synchronize time function
-	if (day > -1 && day < 7 && hour > -1 && hour < 24 && minuts > -1 && minuts < 60) {
-		trame[5] = day
-		trame[6] = hour
-		trame[7] = minuts
-	} else {
-		let d = new Date()
-		trame[5] = VelbusDay(d)
-		trame[6] = d.getHours()
-		trame[7] = d.getMinutes()
-	}
-	trame[8] = CheckSum(trame, 0);
-	trame[9] = VMB_EndX;
-	return trame
-}
-
-/**
- * Request Real Time Clock status
- * @returns Velbus frame ready to emit
- */
-function requestTime() {
-	let trame = new Uint8Array(5);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = 0x00;
-	trame[3] = 0x01;    // len 1, RTR off
-	trame[4] = 0xD7;    // request time function
-	trame[5] = CheckSum(trame, 0);
-	trame[6] = VMB_EndX;
-	return trame;
-}
-
-function requestName (addr, part) {
-	let trame = new Uint8Array(8);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = addr;
-	trame[3] = 0x02;    // len 1, RTR off
-	trame[4] = 0xEF;     // request name function
-	trame[5] = part;
-	trame[6] = CheckSum(trame, 0);
-	trame[7] = VMB_EndX;
-	return trame;
+ async function VMBWrite(req) {
+	console.error('\x1b[32m', "VelbusLib writing", toHexa(req).join(), '\x1b[0m')
+	VelbusConnexion.write(req);
+	await sleep(10)
 }
 
 
@@ -447,22 +354,6 @@ function relayTimer(adr, part, timing = 120) {
 }
 
 
-// ==================================================================================
-// =                       functions VMB TEMPERATURE                             =
-// ==================================================================================
-
-function TempRequest(addr, part=1, interval=0) {
-	let trame = new Uint8Array(8);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = addr;
-	trame[3] = 0x02;    // len 1, RTR off
-	trame[4] = 0xE5;     // request Temp function
-	trame[5] = interval;
-	trame[6] = CheckSum(trame, 0);
-	trame[7] = VMB_EndX;
-	return trame;
-}
 
 // ==================================================================================
 // =                       functions VMB ENERGY COUNTER                             =
@@ -603,7 +494,7 @@ function surveyEnergyStatus() {
 
 // 🌡️ GESTION TEMPERATURE
 async function VMBRequestTemp(adr, part) {
-	let trame = TempRequest(adr, part);
+	let trame = requestTemp(adr, part);
 	VMBWrite(trame);
 	await sleep(200);
 	if (VMBTempStatus.get(adr + "-" + part) != undefined)
@@ -698,7 +589,7 @@ export {
 	CounterRequest, Blind,
 	// BlindModule.blind, blindStop, // DEBUG 
 	VelbusStart, VMBEmitter,
-	VMBsyncTime, synchroTime,
+	FrameTransmitTime as VMBsyncTime, synchroTime,
 	VMBRequestTemp, VMBRequestEnergy
 }
 

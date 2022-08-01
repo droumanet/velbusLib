@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url'
 import schedule from 'node-schedule'
 import VMBserver from './config/VMBServer.json' assert {type:"json"}    // configuration Velbus server TCP port and address
 import * as velbuslib  from "./modules/velbuslib.js"
-import { VMBmodule } from './modules/VMBModuleClass.mjs'
+import { VMBmodule } from './modules/velbuslib_class.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 let app = express()
