@@ -1,7 +1,11 @@
-
+// frame part
+export const VMB_StartX = 0x0F;
+export const VMB_EndX = 0x04;
+export const VMB_PrioHi = 0xF8;
+export const VMB_PrioLo = 0xFB;
 
 //#region modules AS Modules (code, name, desc)
-const VMBmodules    = 
+export let VMBTypemodules    = 
 [{code : "0x01", name :  "VMB8PB", desc : "8 simple push buttons module"},
  {code : "0x02", name :  "VMB1RY",  desc : "1 relay (with physical button) module"},
  {code : "0x03", name :  "VMB1BL",  desc : "1 blind (with physical button) module"},
@@ -44,7 +48,7 @@ const VMBmodules    =
 //#endregion
 
 //#region VMBfunction AS Velbus functions (code, name)
-const VMBfunction    = 
+export let VMBfunction    = 
 [{code : 0x00, name :  "VMBInputStatusResponse"},
 {code : 0x01, name :  "VMBRelayOff"},
 {code : 0x02, name :  "VMBRelayOn"},
@@ -113,8 +117,3 @@ const VMBfunction    =
 {code : 0xFE, name :  "VMBTransmitMem"},
 {code : 0xFF, name :  "VMBModuleStatus"}];
 //#endregion
-
-module.exports = {
-    VMBmodules,
-    VMBfunction
-}

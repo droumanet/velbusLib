@@ -16,172 +16,28 @@
 
 
 /* ====================================================================================================================
-	Velbus frame
+	Velbus frame Format 0F (FB|F8) @@ LL ( FT B2 ... Bn) ## 04 
   --------------------------------------------------------------------------------------------------------------------
- |    0    |   1  |  2   |    3    |  4   |   5   |   6   |   7   |   8   |   9   |   10  |   11  |     x    |   x+1  |
+ |    0    |   1  |  2   |    3    |  4   |   5   |   6   |   7   |   8   |  ...  |   10  |   11  |     x    |   x+1  |
   --------------------------------------------------------------------------------------------------------------------
- | VMBStrt | Prio | Addr | RTR/Len | Func | Byte2 | Byte3 | Byte4 | Byte5 | Byte6 | Byte7 | Byte8 | Checksum | VMBEnd |
+ | VMBStrt | Prio | Addr | RTR/Len | Func | Byte2 | Byte3 | Byte4 | Byte5 |  ...  | Byte7 | Byte8 | Checksum | VMBEnd |
   --------------------------------------------------------------------------------------------------------------------
   (1) Len = RTR/Len & 0x0F
   (2) RTR = 1 only for Module Type Request (reception). RTR is Remote Transmit Request
- ======================================================================================================================
-*/
+ =================================================================================================================== */
 
 import EventEmitter from 'events';
-//const EventEmitter = require('events').EventEmitter;
-import { write, WriteStream } from "fs"
-// const BlindModule = require('./primitives_blind.mjs')	//DEBUG submodules problem to resolve
-import {blindHello} from './primitives_blind.mjs'
-
-blindHello("David")
+import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
+import { VMBmodule } from './VMBModuleClass.mjs';
+import * as Blind from './primitives_blind.mjs'
 
 const VMBEmitter = new EventEmitter()
-
-class VMBmodule {
-	address = 0
-	part = 0
-	id = ""			// adr-part : part always be 1 to n, ex. VMB1TS would be 128-1
-	name = ""
-	type = 0		// exact type module
-	fct=""			// function like 'temp', 'energy', 'relay', 'lamp', 'dimmer', blind', 'motor'...
-	status = {}		// object containing the specific status
-	group = []		// could be multiple : room, floor, orientation (west, north...) or some useful tags
-
-	constructor(address, part, key, fct, status) {
-		this.address = address
-		this.part = part
-		this.id = key
-		this.fct = fct
-		this.status = status
-	}
-}
 
 // General list for event
 let moduleList = new Map()
 let VMBNameStatus = new Map()
 let VMBTempStatus = new Map()
 let VMBEnergyStatus = new Map()
-
-const VMB_StartX = 0x0F;
-const VMB_EndX = 0x04;
-const VMB_PrioHi = 0xF8;
-const VMB_PrioLo = 0xFB;
-
-
-//#region modules AS Modules (code, name, desc)
-const VMBmodules =
-	[{ code: "0x01", name: "VMB8PB", desc: "8 simple push buttons module", part: 8 },
-	{ code: "0x02", name: "VMB1RY", desc: "1 relay (with physical button) module", part: 1 },
-	{ code: "0x03", name: "VMB1BL", desc: "1 blind (with physical button) module", part: 1 },
-	{ code: "0x05", name: "VMB6IN", desc: "6 inputs module", part: 6 },
-	{ code: "0x07", name: "VMB1DM", desc: "1 dimmer (with physical button) module", part: 1 },
-	{ code: "0x08", name: "VMB4RY", desc: "4 relays (with physical buttons) module", part: 4 },
-	{ code: "0x08", name: "VMB4RY", desc: "4 relays (with physical buttons) module", part: 4 },
-	{ code: "0x09", name: "VMB2BL", desc: "2 blind (with physical button) module", part: 2 },
-	{ code: "0x0B", name: "VMB4PD", desc: "8 (2x4) push buttons with display module", part: 8 },
-	{ code: "0x0C", name: "VMB1TS", desc: "1 temperature sensor module", part: 1 },
-	{ code: "0x0D", name: "VMB1TH", desc: "-never produced-", part: 0 },
-	{ code: "0x0E", name: "VMB1TC", desc: "1 temperature sensor module", part: 1 },
-	{ code: "0x0F", name: "VMB1LED", desc: "1 LED controller module", part: 1 },
-	{ code: "0x10", name: "VMB4RYLD", desc: "4 relays (common power source) module", part: 4 },
-	{ code: "0x11", name: "VMB4RYNO", desc: "4 relays module", part: 4 },
-	{ code: "0x12", name: "VMB4DC", desc: "4 channels controller (0..10v) module", part: 4 },
-	{ code: "0x14", name: "VMBDME", desc: "1 dimmer (electronic transformer load) module", part: 1 },
-	{ code: "0x15", name: "VMBDMI", desc: "1 dimmer (inductive load) module", part: 1 },
-	{ code: "0x16", name: "VMB8PBU", desc: "8 push buttons (different form factor) module", part: 8 },
-	{ code: "0x17", name: "VMB6BPN", desc: "6 push buttons (Niko compatible) module", part: 6 },
-	{ code: "0x18", name: "VMB2PBAN", desc: "2 push buttons (Niko compatible) module", part: 2 },
-	{ code: "0x18", name: "VMB2PBN", desc: "2 push buttons (Niko compatible) module", part: 2 },
-	{ code: "0x1A", name: "VMB4RF", desc: "4 channels wireless remote module", part: 4 },
-	{ code: "0x1B", name: "VMB1RYNO", desc: "1 relay module", part: 1 },
-	{ code: "0x1C", name: "VMB1BLE", desc: "1 blind module", part: 1 },
-	{ code: "0x1D", name: "VMB2BLE", desc: "2 blind module", part: 2 },
-	{ code: "0x1E", name: "VMBGP1", desc: "1 push glass button module", part: 1 },
-	{ code: "0x1F", name: "VMBGP2", desc: "2 push glass button module", part: 2 },
-	{ code: "0x20", name: "VMBGP4", desc: "4 push glass button module", part: 4 },
-	{ code: "0x25", name: "VMBGPTC", desc: "", part: 1 },
-	{ code: "0x28", name: "VMBGPOD", desc: "", part: 1 },
-	{ code: "0x29", name: "VMB1RYNOS", desc: "", part: 1 },
-	{ code: "0x2A", name: "VMBPIRM", desc: "Infra Red sensor", part: 1 },
-	{ code: "0x2B", name: "VMBPIRC", desc: "Infra Red sensor", part: 1 },
-	{ code: "0x2C", name: "VMBPIRO", desc: "Infra Red sensor", part: 1 },
-	{ code: "0x2D", name: "VMBGP4PIR", desc: "4 push buttons + Infra Red sensor", part: 4 },
-	{ code: "0x2E", name: "VMB1BLS", desc: "", part: 1 },
-	{ code: "0x2F", name: "VMBDMIR", desc: "", part: 1 },
-	{ code: "0x30", name: "VMBRF8RXS", desc: "", part: 8 }
-	];
-//#endregion
-
-//#region VMBfunction AS Velbus functions (code, name)
-const VMBfunction =
-	[{ code: 0x00, name: "VMBInputStatusResponse" },
-	{ code: 0x01, name: "VMBRelayOff" },
-	{ code: 0x02, name: "VMBRelayOn" },
-	{ code: 0x03, name: "VMBRelayTimer" },
-	{ code: 0x04, name: "VMBBlindHalt" },
-	{ code: 0x05, name: "VMBBlindUp" },
-	{ code: 0x06, name: "VMBBlindDown" },
-	{ code: 0x06, name: "VMBDimmerValueSet" },
-	{ code: 0x0D, name: "VMBStartBlink" },
-	{ code: 0x0F, name: "VMBSliderStatusRequest" },
-	{ code: 0x12, name: "VMBUnlockChannel" },
-	{ code: 0x13, name: "VMBUnlockChannel" },
-	{ code: 0x66, name: "VMB update1" },
-	{ code: 0x67, name: "VMB update2" },
-	{ code: 0x68, name: "VMB update3" },
-	{ code: 0xAF, name: "VMBSetDaylightSaving" },
-	{ code: 0xB1, name: "VMBDisableChannelProgram" },
-	{ code: 0xB2, name: "VMBEnableChannelProgram" },
-	{ code: 0xB3, name: "VMBSelectProgram" },
-	{ code: 0xB7, name: "VMBDateStatus" },
-	{ code: 0xB9, name: "VMBSensorSettingsPart4" },
-	{ code: 0xBB, name: "VMBSensorConfigData" },
-	{ code: 0xBD, name: "VMBCounterStatusRequest" },
-	{ code: 0xBE, name: "VMBCounterStatusResponse" },
-	{ code: 0xBF, name: "undefined" },
-	{ code: 0xC6, name: "VMBSensorSettingsPart3" },
-	{ code: 0xC9, name: "VMBReadMemBlock" },
-	{ code: 0xCA, name: "VMBWriteMemBlock" },
-	{ code: 0xCB, name: "VMBMemDumpRequest" },
-	{ code: 0xCC, name: "VMBTransmitMemBlock" },
-	{ code: 0xD0, name: "VMBLCDTextRequest" },
-	{ code: 0xD1, name: "VMBButtonTimer" },
-	{ code: 0xD2, name: "VMBLCDBackLightDefault" },
-	{ code: 0xD3, name: "VMBButtonBackLightDef" },
-	{ code: 0xD4, name: "VMBButtonBackLight" },
-	{ code: 0xD5, name: "VMBBackContrastRequest" },
-	{ code: 0xD7, name: "VMBRealTimeClockRequest" },
-	{ code: 0xD8, name: "VMBRealTimeClockSet" },
-	{ code: 0xD9, name: "VMBErrorCountRequest" },
-	{ code: 0xDA, name: "VMBErrorCountResponse" },
-	{ code: 0xE4, name: "VMBTempReset" },
-	{ code: 0xE5, name: "VMBTempRequest" },
-	{ code: 0xE6, name: "VMBTempResponse" },
-	{ code: 0xE7, name: "-" },
-	{ code: 0xE8, name: "VMBSensorSettingsPart1" },
-	{ code: 0xE9, name: "VMBSensorSettingsPart2" },
-	{ code: 0xEA, name: "VMBSensorStatusResponse" },
-	{ code: 0xEC, name: "VMBTransmitBlindStatus" },
-	{ code: 0xED, name: "VMB7InputStatusResponse" },
-	{ code: 0xEE, name: "VMBTransmitDimStatus" },
-	{ code: 0xEF, name: "VMBNameRequest" },
-	{ code: 0xF0, name: "VMBNamePart1" },
-	{ code: 0xF1, name: "VMBNamePart2" },
-	{ code: 0xF2, name: "VMBNamePart3" },
-	{ code: 0xF3, name: "VMBLCDBackLightSet" },
-	{ code: 0xF4, name: "VMBLedUpdate" },
-	{ code: 0xF5, name: "VMBLedClear" },
-	{ code: 0xF6, name: "VMBLedSet" },
-	{ code: 0xF7, name: "VMBBlinkSlow" },
-	{ code: 0xF8, name: "VMBBlinkFast" },
-	{ code: 0xF9, name: "VMBBlinkVeryFast" },
-	{ code: 0xFA, name: "VMBStatusRequest" },
-	{ code: 0xFB, name: "VMBTransmitRelayStatus" },
-	{ code: 0xFC, name: "VMBWriteMem" },
-	{ code: 0xFD, name: "VMBReadMem" },
-	{ code: 0xFE, name: "VMBTransmitMem" },
-	{ code: 0xFF, name: "VMBModuleTypeRequest" }];
-//#endregion
 
 // ============================================================================================================
 // =                                    Functions for internal use                                            =
@@ -279,7 +135,7 @@ function Part2Bin(partValue) {
  * @returns name of module
  */
 const getName = (code) => {
-	let result = modules.find(item => Number(item.code) == code);
+	let result = VMBTypemodules.find(item => Number(item.code) == code);
 	if (result !== undefined) return result.name;
 	return "unknown";
 };
@@ -290,27 +146,23 @@ const getName = (code) => {
  * @returns code of module
  */
 const getCode = (name) => {
-	for (let item of modules) {
+	for (let item of VMBTypemodules) {
 		if (item.name == name) return Number(item.code);
 	}
 	return 0x00;
 };
 
-/**
- * send back description module from code or name module
- * @param {*} element String or Number. Searched element
- * @returns Description for the item searched
- */
+// send back description module from code or name module
 const getDesc = (element) => {
 	// if string then search by name...
 	if (typeOf(element) == string) {
-		for (let item of modules) {
+		for (let item of VMBTypemodules) {
 			if (item.name == element) return item.desc
 		}
 		return "unknown"
 	} else {
 		// ... search by code
-		for (let item of modules) {
+		for (let item of VMBTypemodules) {
 			if (Number(item.code) == element) return item.desc
 		}
 		return "unknown"
@@ -401,7 +253,6 @@ function analyze2Texte(element) {
 			}
 
 			// in case name is complete (flag = 100 | 010 | 001)
-			// [X] trying name setting in modules
 			if ((f|flag) == 0b111) {
 				let m = moduleList.get(key)
 				if (m != undefined) {
@@ -419,8 +270,6 @@ function analyze2Texte(element) {
 		default:
 			break;
 	}
-
-	// console.log(texte)
 	return texte;
 }
 
@@ -464,8 +313,6 @@ function scanModule(adr) {
 	trame[7] = VMB_EndX;
 	return trame;
 }
-const discover = scanModule
-
 
 /**
  * VMBsyncTime Create a frame able to synchronize time on Velbus modules
@@ -848,10 +695,8 @@ export {
 	getName, getCode, getDesc, resume,
 	VMBWrite, requestName,
 	relaySet,
-	CounterRequest, blindHello,
+	CounterRequest, Blind,
 	// BlindModule.blind, blindStop, // DEBUG 
-	discover,
-	analyze2Texte,
 	VelbusStart, VMBEmitter,
 	VMBsyncTime, synchroTime,
 	VMBRequestTemp, VMBRequestEnergy

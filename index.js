@@ -4,11 +4,8 @@
  * This code is experimental and is published only for those who want to use Velbus with NodeJS project.
  * Use it without any warranty.
  */
-
  'use strict';
  
-
-// Partie serveur Node.JS classique
 import path from 'path'
 import {dirname} from 'path'
 import express from 'express'
@@ -19,9 +16,8 @@ import {Router} from './routes/routes.js'
 import { fileURLToPath } from 'url'
 import schedule from 'node-schedule'
 import VMBserver from './config/VMBServer.json' assert {type:"json"}    // configuration Velbus server TCP port and address
-import * as velbuslib  from "./controllers/velbuslib.js"
-
-// import { blindHello } from './controllers/primitives_blind.mjs' // DEBUG unwanted import submodule
+import * as velbuslib  from "./modules/velbuslib.js"
+import { VMBmodule } from './modules/VMBModuleClass.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 let app = express()
@@ -41,6 +37,7 @@ app.use(cors({
 app.use('/css', express.static(path.join(__dirname, 'node_modules/@mdi/font/css')))
 console.error(path.join(__dirname, 'node_modules/@mdi/font/css'))
 
+// create websocket with existing port HTTP for web client
 let myhttp = http.createServer(app);
 let myio = new Server(myhttp, {
     // manage CORS for NAT traversal
@@ -48,11 +45,8 @@ let myio = new Server(myhttp, {
         origin: "http://teo-tea.hd.free.fr:8002",
         methods: ["GET", "POST"]
       }    
-});        // create websocket with existing port HTTP for web client
+});
 
-
-// import { blindHello } from './controllers/primitives_blind.mjs';
-console.log(blindHello("Jack"))
 velbuslib.VelbusStart(VMBserver.host, VMBserver.port)
 let moduleList = new Map()
 
@@ -127,9 +121,6 @@ let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
 
     let d = new Date()
     console.log(d.toISOString(), "Launch CRON scripts")
-
-    // FIXME howto to use submodules in NodeJS. console.log("blindHello call : ", velbuslib.blind.blindHello("Max"))
-    // console.log("blindHello call : ", velbuslib.blind.blindHello("Max"))
     velbuslib.VMBRequestEnergy(0x06, 1)
     .then((msg) => console.log("CRON for PAC  : ", msg, new Date(msg.timestamp).toISOString()))
     .catch((msg) => console.error(msg))
@@ -155,6 +146,3 @@ let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
 let every5min = schedule.scheduleJob('*/5 * * * *', () => {
     // call every 5 minutes event like temperatures
 })
-
-
-
