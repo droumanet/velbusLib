@@ -2,8 +2,9 @@
 // =                       functions VMB TEMPERATURE                                =
 // ==================================================================================
 
+import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo, CheckSum} from './velbuslib_constant.js'
 
-const requestTemp = (addr, part=1, interval=0) => {
+const FrameRequestTemp = (addr, part=1, interval=0) => {
 	let trame = new Uint8Array(8);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -18,6 +19,6 @@ const requestTemp = (addr, part=1, interval=0) => {
 
 
 export {
-    requestTemp,
+    FrameRequestTemp
 
 }

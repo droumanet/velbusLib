@@ -30,7 +30,7 @@ import EventEmitter from 'events';
 import { VMBmodule } from './velbuslib_class.mjs';
 import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
 import * as Blind from './velbuslib_blind.mjs'
-import { requestTemp } from './velbuslib_temp.mjs';
+import { FrameRequestTemp } from './velbuslib_temp.mjs';
 import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime} from './velbuslib_generic.mjs';
 
 const VMBEmitter = new EventEmitter()
@@ -62,7 +62,11 @@ const CheckSum = (frame, full = 1) => {
 	return crc;
 }
 
-// Function Cut : split messages that are in the same frame. Example 0F...msg1...04 0F...msg2...04
+/**
+ * Cut split messages that are in the same frame. Example 0F...msg1...04 0F...msg2...04
+ * @param {*} data 
+ * @returns 
+ */
 const Cut = (data) => {
 	let table = [];
 	let longueur, VMBSize;
@@ -87,7 +91,7 @@ const Cut = (data) => {
 }
 
 /**
- * convert a buffer into a table containing hexa code (2 chars) for each byte
+ * toHexa convert a buffer into a table containing hexa code (2 chars) for each byte
  * @param {Array} donnees 
  * @returns Hexadecimal string
  */
@@ -105,14 +109,18 @@ function toHexa(donnees) {
 }
 
 // convert a binary value into a string with number or . (ex 5 => 1.4.....)
+/**
+ * toButtons convert a binary value into an array with active bit (ex. 0b00110 => [2,4])
+ * @param {*} valeur 
+ * @param {*} nb 
+ * @returns array of active button's number
+ */
 function toButtons(valeur, nb) {
-	let response = "";
+	let response = [];
 	let x = 1;
 	for (let t = 1; t < (nb + 1); t++) {
 		if (valeur & x) {
-			response += t.toString();
-		} else {
-			response += ".";
+			response.push(t);
 		}
 		x = x << 1
 	}
@@ -460,7 +468,7 @@ function surveyTempStatus() {
 			VMBTempStatus.set(key, status)
 			UpdateModule(key, status)
 			if (VMBNameStatus.get(key) == undefined) {
-				VMBWrite(requestName(msg.RAW[2], 1))
+				VMBWrite(FrameRequestName(msg.RAW[2], 1))
 				moduleList.set(key, new VMBmodule(msg.RAW[2], 1, key, "temp", status))
 			}
 			// console.log("Tableau TempStatus : ", VMBTempStatus)
@@ -483,7 +491,7 @@ function surveyEnergyStatus() {
 			VMBEnergyStatus.set(key, status)
 			UpdateModule(key, status)
 			if (VMBNameStatus.get(key) == undefined) {
-				VMBWrite(requestName(msg.RAW[2], Part2Bin(part)))
+				VMBWrite(FrameRequestName(msg.RAW[2], Part2Bin(part)))
 				moduleList.set(key, new VMBmodule(msg.RAW[2], 1, key, "energy", status))
 			}
 			// console.log("Tableau EnergyStatus : ", VMBEnergyStatus)
@@ -494,7 +502,7 @@ function surveyEnergyStatus() {
 
 // 🌡️ GESTION TEMPERATURE
 async function VMBRequestTemp(adr, part) {
-	let trame = requestTemp(adr, part);
+	let trame = FrameRequestTemp(adr, part);
 	VMBWrite(trame);
 	await sleep(200);
 	if (VMBTempStatus.get(adr + "-" + part) != undefined)
@@ -534,8 +542,6 @@ async function VMBRequestEnergy(adr, part) {
 
 // see VelbusServer.js 
 import net from 'net'
-import { isUndefined } from 'util';
-// const { isUndefined } = require('util');
 let VelbusConnexion = new net.Socket();
 const VelbusStart = (host, port) => {
 	VelbusConnexion.connect(port, host);
@@ -584,12 +590,10 @@ export {
 	Cut,
 	toHexa,
 	getName, getCode, getDesc, resume,
-	VMBWrite, requestName,
+	VMBWrite,
 	relaySet,
-	CounterRequest, Blind,
-	// BlindModule.blind, blindStop, // DEBUG 
+	CounterRequest,
 	VelbusStart, VMBEmitter,
-	FrameTransmitTime as VMBsyncTime, synchroTime,
 	VMBRequestTemp, VMBRequestEnergy
 }
 

@@ -1,5 +1,6 @@
-const assert = require('assert');
-let velbus = require('../controllers/velbuslib');
+import {jest} from '@jest/globals';
+import {velbus} from '../modules/velbuslib'
+
 
 
 // getName test : 0x08 VMB4RY

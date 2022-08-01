@@ -3,6 +3,7 @@
 // ============================================================================================================
 // [ ] Write this module as CtrlSensor.js
 
+import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo, CheckSum} from './velbuslib_constant.js'
 
 /**
  * Function to create frame for moving UP or DOWN blind on a module

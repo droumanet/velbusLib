@@ -14,9 +14,9 @@
 */
 // initialisation
 const socket = io("http://192.168.168.248:8002");
-let nbMsg = 15;
+let nbMsg = 500;
 let tableMsg = [];
-tableMsg.length = nbMsg;    // force 15 rows even if they're empty
+//tableMsg.length = nbMsg;    // force 15 rows even if they're empty
 
 class VMBmodule {
 	address = 0
@@ -42,9 +42,10 @@ function toHexa(donnees) {
   console.log("toHexa ", donnees)
 
 	if (donnees !== undefined) {
+    let toRead = new Uint8Array(donnees)
 		let c = '';
 		let dhex = [];
-		for (const donnee of donnees) {
+		for (const donnee of toRead) {
 			c = donnee.toString(16).toUpperCase();
 			if (c.length < 2) c = '0' + c;
 			dhex.push(c);
@@ -67,7 +68,7 @@ function listerMsg() {
       part[1] = message.Description
       part[2] = toHexa(message.RAW)
     }
-    texte = texte + '<div class="line"><div class="msg">'+part[0]+" "+part[1]+"</div>" + '<div class="other">'+part[2]+"</div><div></div></div>\n";
+    texte = '<div class="line"><div class="msg">'+part[0]+" "+part[1]+"</div>" + '<div class="other">'+part[2]+"</div><div></div></div>\n" + texte
   }
 
   return texte;

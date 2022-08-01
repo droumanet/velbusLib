@@ -117,3 +117,20 @@ export let VMBfunction    =
 {code : 0xFE, name :  "VMBTransmitMem"},
 {code : 0xFF, name :  "VMBModuleStatus"}];
 //#endregion
+
+/**
+ * Checksum is able to calculate the frame checksum
+ * @param {Buffer} frame a Velbus frame from 0F xxxxx to 04
+ * @param {number} full number removed from frame length (default=1)
+ * @returns {number} sum all bytes then XOR FF + 1
+ */
+ export const CheckSum = (frame, full = 1) => {
+	let crc = 0;
+	for (let i = 0; i < frame.length - 1 - full; i++) {
+		crc = crc + (frame[i] & 0xFF);
+	}
+	crc = crc ^ 0xFF;
+	crc = crc + 1;
+	crc = crc & 0xFF;
+	return crc;
+}
