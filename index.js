@@ -18,7 +18,10 @@ import {Server} from 'socket.io'
 import {Router} from './routes/routes.js'
 import { fileURLToPath } from 'url'
 import schedule from 'node-schedule'
-import { blindHello } from './controllers/primitives_blind.mjs'
+import VMBserver from './config/VMBServer.json' assert {type:"json"}    // configuration Velbus server TCP port and address
+import * as velbuslib  from "./controllers/velbuslib.js"
+
+// import { blindHello } from './controllers/primitives_blind.mjs' // DEBUG unwanted import submodule
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 let app = express()
@@ -47,19 +50,16 @@ let myio = new Server(myhttp, {
       }    
 });        // create websocket with existing port HTTP for web client
 
-// Velbus part
-import VMBserver from './config/VMBServer.json' assert {type:"json"}
-// DEBUG import {enHexa} from './controllers/traitement'
 
-// in VelbusLib, there is socketIO for communication between Velbus and this application
-import * as velbuslib  from "./controllers/velbuslib.js"
+// import { blindHello } from './controllers/primitives_blind.mjs';
+console.log(blindHello("Jack"))
 velbuslib.VelbusStart(VMBserver.host, VMBserver.port)
 let moduleList = new Map()
 
 
-// ==================================================================================
-// =                          SocketIO client connexion                             =
-// ==================================================================================
+// ==========================================================================================================
+// =                                     SocketIO client connexion                                          =
+// ==========================================================================================================
 
 // here is an example on how to connect, from HTML/JS page : let listenClients = io.listen(http);
 
@@ -126,7 +126,8 @@ let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
     // DEBUG call every 10 secondes for debuging
 
     let d = new Date()
-    console.log(d.toISOString())
+    console.log(d.toISOString(), "Launch CRON scripts")
+
     // FIXME howto to use submodules in NodeJS. console.log("blindHello call : ", velbuslib.blind.blindHello("Max"))
     // console.log("blindHello call : ", velbuslib.blind.blindHello("Max"))
     velbuslib.VMBRequestEnergy(0x06, 1)

@@ -848,7 +848,7 @@ export {
 	getName, getCode, getDesc, resume,
 	VMBWrite, requestName,
 	relaySet,
-	CounterRequest,
+	CounterRequest, blindHello,
 	// BlindModule.blind, blindStop, // DEBUG 
 	discover,
 	analyze2Texte,
