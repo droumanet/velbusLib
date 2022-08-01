@@ -1,7 +1,6 @@
-let db= require('../Database');
-module.exports={
-    getPower:function(callback){
-        var sql='SELECT * FROM pwrDay';
+import * as db from '../Database.mjs'
+    function getPower(callback){
+        let sql='SELECT * FROM pwrDay';
         db.query(sql, function (err, data, fields) {
             if (err) throw err;
             return callback(data);
@@ -18,4 +17,4 @@ module.exports={
     },
     */
 
-}
+export {getPower}

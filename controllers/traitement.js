@@ -1,4 +1,4 @@
-const enHexa = (donnees) => {
+function enHexa(donnees) {
     let c='';
     let dhex=[];
     for (let donnee of donnees) {
@@ -9,6 +9,4 @@ const enHexa = (donnees) => {
     return dhex.toString()+' ('+donnees.length+')';
 }
 
-module.exports = {
-    enHexa
-}
+export {enHexa}

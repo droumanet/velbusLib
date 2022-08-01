@@ -1,4 +1,3 @@
-
 div.line {
     border-color: rgb(110, 110, 110);
     border-style: solid;
@@ -19,4 +18,8 @@ div.other {
 #VelbusMsg {
     border-color: black;
     border-style: solid;
+}
+
+a.nolink {
+    text-decoration: none;
 }

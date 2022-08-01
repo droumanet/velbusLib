@@ -5,6 +5,15 @@
  * @license CommonCreative BY.
  */
 
+// [ ] Etat Relais
+// [ ] Fonctions relais
+// [ ] Liste bouton
+// [ ] Appui bouton
+// [ ] Etat dimmer
+// [ ] Fonctions dimmer
+// [ ] Etat volet
+// [x] Etat température
+
 
 /* ====================================================================================================================
 	Velbus frame
@@ -18,12 +27,37 @@
  ======================================================================================================================
 */
 
-const EventEmitter = require('events').EventEmitter;
-const { write, WriteStream } = require('fs');
+import EventEmitter from 'events';
+//const EventEmitter = require('events').EventEmitter;
+import { write, WriteStream } from "fs"
+// const BlindModule = require('./primitives_blind.mjs')	//DEBUG submodules problem to resolve
+import {blindHello} from './primitives_blind.mjs'
+
+blindHello("David")
+
 const VMBEmitter = new EventEmitter()
 
+class VMBmodule {
+	address = 0
+	part = 0
+	id = ""			// adr-part : part always be 1 to n, ex. VMB1TS would be 128-1
+	name = ""
+	type = 0		// exact type module
+	fct=""			// function like 'temp', 'energy', 'relay', 'lamp', 'dimmer', blind', 'motor'...
+	status = {}		// object containing the specific status
+	group = []		// could be multiple : room, floor, orientation (west, north...) or some useful tags
+
+	constructor(address, part, key, fct, status) {
+		this.address = address
+		this.part = part
+		this.id = key
+		this.fct = fct
+		this.status = status
+	}
+}
+
 // General list for event
-let VMBmodule = new Map()
+let moduleList = new Map()
 let VMBNameStatus = new Map()
 let VMBTempStatus = new Map()
 let VMBEnergyStatus = new Map()
@@ -148,6 +182,10 @@ const VMBfunction =
 	{ code: 0xFE, name: "VMBTransmitMem" },
 	{ code: 0xFF, name: "VMBModuleTypeRequest" }];
 //#endregion
+
+// ============================================================================================================
+// =                                    Functions for internal use                                            =
+// ============================================================================================================
 
 /**
  * Checksum is able to calculate the frame checksum
@@ -281,20 +319,24 @@ const getDesc = (element) => {
 }
 
 // send back function name module from function code module
-const getFunction = (code) => {
+function getFunction(code) {
 	let result = VMBfunction.find(item => Number(item.code) == code)
 	if (result !== undefined) return result.name
 	return "unknown"
 }
-const localModuleName = (k) => {
+function localModuleName(k) {
 	let myModule = VMBNameStatus.get(k)
 	if (myModule == undefined) return "****"
 	return myModule.name
 }
 
+function resume() {
+	return moduleList;
+}
+
 
 // debug function
-const analyze2Texte = (element) => {
+function analyze2Texte(element) {
 	let fctVelbus = Number(element[4])
 	let lenVelbus = element[3] & 0x0F
 	let adrVelbus = element[2]
@@ -312,7 +354,7 @@ const analyze2Texte = (element) => {
 			let division = (element[5] >> 2) * 100;
 			let part = (element[5] & 0x3); 
 			
-			// part is 0 to 3
+			// part is 0 to 3 but keyModule is 1 to 4
 			keyModule=element[2]+"-"+(part+1)
 			let compteur = (element[6] * 0x1000000 + element[7] * 0x10000 + element[8] * 0x100 + element[9]) / division;
 			compteur = Math.round(compteur * 1000) / 1000;
@@ -320,14 +362,14 @@ const analyze2Texte = (element) => {
 			if (element[10] != 0xFF && element[11] != 0xFF) {
 				conso = Math.round((1000 * 1000 * 3600 / (element[10] * 256 + element[11])) / division * 10) / 10;
 			}
-			texte += "  " + compteur + " KW, (Instantané :" + conso + " W) "+localModuleName(keyModule) + "   "+keyModule;
+			texte += "  " +localModuleName(keyModule)+" "+ compteur + " KW, (Instantané :" + conso + " W) ";
 			break;
 		case 0xE6:
 			keyModule=adrVelbus+"-1"
-			texte += "  " + TempCurrentCalculation(element) + "°C "+localModuleName(keyModule);
+			texte += "  " +localModuleName(keyModule) + " " +TempCurrentCalculation(element) + "°C";
 			break;
 		case 0xEA:
-			texte += "  " + Number(element[8]) / 2 + "°C";
+			texte += "  " +localModuleName(keyModule) + " " + Number(element[8]) / 2 + "°C";
 			break;
 		case 0xF0:
 		case 0xF1:
@@ -336,25 +378,38 @@ const analyze2Texte = (element) => {
 			let myModule = VMBNameStatus.get(key)
 			let max=6
 			if (myModule == undefined) {
-				VMBNameStatus.set(key, {"address":element[2],"name":"", "n1":"", "n2":"", "n3":""})
+				VMBNameStatus.set(key, {"address":element[2],"name":"", "n1":"", "n2":"", "n3":"", "flag":0})
 				myModule = VMBNameStatus.get(key)
 			}
 			if (fctVelbus == 0xF2) max=4
 
 			let n=new Array()
 			let idx = fctVelbus-0xF0
+			let flag = 2**idx
+			let f = myModule.flag
+	
 			n[0]=myModule.n1
 			n[1]=myModule.n2
 			n[2]=myModule.n3
 			n[idx]=""
 			
-			console.log("NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
+			// console.log("NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
 			for (let t=0; t<max; t++) {
 				if (element[6+t] != 0xFF) {
 					n[idx]=n[idx]+String.fromCharCode(element[6+t])
 				}
 			}
-			VMBNameStatus.set(key, {"address":element[2],"name":n[0]+n[1]+n[2], "n1":n[0], "n2":n[1], "n3":n[2]})
+
+			// in case name is complete (flag = 100 | 010 | 001)
+			// [X] trying name setting in modules
+			if ((f|flag) == 0b111) {
+				let m = moduleList.get(key)
+				if (m != undefined) {
+					m.name = n[0]+n[1]+n[2]
+					moduleList.set(key, m)
+				}
+			}
+			VMBNameStatus.set(key, {"address":element[2],"name":n[0]+n[1]+n[2], "n1":n[0], "n2":n[1], "n3":n[2], "flag":flag|f})
 			texte += " Transmit it name '"+n[0]+n[1]+n[2]+"'"
 			break;
 		case 0xFB:
@@ -374,32 +429,32 @@ const analyze2Texte = (element) => {
  * @param {Buffer} req RAW format Velbus frame
  * @param {*} res not used
  */
-const VMBWrite = async (req) => {
+async function VMBWrite(req) {
 	console.error('\x1b[32m', "VelbusLib writing", toHexa(req).join(), '\x1b[0m')
-	client.write(req);
+	VelbusConnexion.write(req);
 	await sleep(10)
 }
 
 /**
- * 
+ * Convert JS day to Velbus day (offset problem)
  * @param {date} d date as new Date()
  * @returns 0 for monday (d.getDay() would be 1) to 6 for sunday 
  */
-const VelbusDay = (d) => {
+function VelbusDay(d) {
 	if (d.getDay() == 0) return 6
 	else return d.getDay() - 1
 }
 
-// ==================================================================================
-// =                          functions VMB ALL                                     =
-// ==================================================================================
+// ============================================================================================================
+// =                                          functions VMB ALL                                               =
+// ============================================================================================================
 
 /**
  * scanModule Create a frame to force module to answer
  * @param {*} adr Address of module
  * @returns Velbus frame ready to emit
  */
-const scanModule = (adr) => {
+function scanModule(adr) {
 	let trame = new Uint8Array(6);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -416,7 +471,7 @@ const discover = scanModule
  * VMBsyncTime Create a frame able to synchronize time on Velbus modules
   * @returns Velbus frame ready to emit
  */
-const VMBsyncTime = () => {
+function VMBsyncTime() {
 	let d = new Date()
 
 	let trame = new Uint8Array(9);
@@ -442,7 +497,7 @@ const VMBsyncTime = () => {
   * @returns Velbus frame ready to emit
   * Nota : if one transmitted value is wrong, then the current date replace them
  */
-const synchroTime = (day, hour, minuts) => {
+function synchroTime(day, hour, minuts) {
 	let trame = new Uint8Array(9);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -468,7 +523,7 @@ const synchroTime = (day, hour, minuts) => {
  * Request Real Time Clock status
  * @returns Velbus frame ready to emit
  */
-const requestTime = () => {
+function requestTime() {
 	let trame = new Uint8Array(5);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -480,7 +535,7 @@ const requestTime = () => {
 	return trame;
 }
 
-const requestName = (addr, part) => {
+function requestName (addr, part) {
 	let trame = new Uint8Array(8);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -505,7 +560,7 @@ const requestName = (addr, part) => {
  * @param {*} state  optionnal : true (on) or false (off), default false
  * @returns  Velbus frame ready to emit
  */
-const relaySet = (adr, part, state = false) => {
+function relaySet(adr, part, state = false) {
 	let trame = new Uint8Array(8);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioHi;
@@ -525,7 +580,7 @@ const relaySet = (adr, part, state = false) => {
  * @param {*} timing  value in second, from 1 to FFFFFF (permanent), default 120 seconds
  * @returns  Velbus frame ready to emit
  */
-const relayTimer = (adr, part, timing = 120) => {
+function relayTimer(adr, part, timing = 120) {
 	let thigh = timing >> 16 & 0xFF;
 	let tmid = timing >> 8 & 0xFF;
 	let tlow = timing & 0xFF;
@@ -549,7 +604,7 @@ const relayTimer = (adr, part, timing = 120) => {
 // =                       functions VMB TEMPERATURE                             =
 // ==================================================================================
 
-const TempRequest = (addr, part=1, interval=0) => {
+function TempRequest(addr, part=1, interval=0) {
 	let trame = new Uint8Array(8);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -573,7 +628,7 @@ const TempRequest = (addr, part=1, interval=0) => {
  * @param {*} state  optionnal : true (on) or false (off), default false
  * @returns  Velbus frame ready to emit
  */
-const CounterRequest = (adr, part) => {
+function CounterRequest(adr, part) {
 	let trame = new Uint8Array(9);
 	trame[0] = VMB_StartX;
 	trame[1] = VMB_PrioLo;
@@ -588,58 +643,12 @@ const CounterRequest = (adr, part) => {
 }
 
 
-// ==================================================================================
-// =                          functions VMB BLIND                                   =
-// ==================================================================================
-
-/**
- * Function to create frame for moving UP or DOWN blind on a module
- * @param {byte} adr address of module on the bus
- * @param {int} part part to move on module (%0011 or %1100 or %1111)
- * @param {int} state 0: moveUP, other moveDOWN
- * @param {int} duration in seconds, default 30 seconds
- * @returns Velbus frame ready to emit
- */
- const blindMove = (adr, part, state, duration = 30) => {
-	if (state > 0) { state = 0x05 } else { state = 0x06 }
-	if (part == 1) { part = 0x03 }
-	else if (part == 2) { part = 0x0C }
-	else { part = 0x0F }
-	let trame = new Uint8Array(11)
-	trame[0] = VMB_StartX
-	trame[1] = VMB_PrioHi
-	trame[2] = adr
-	trame[3] = 0x05   // len
-	trame[4] = state
-	trame[5] = part
-	trame[6] = duration >> 16 & 0xFF
-	trame[7] = duration >> 8 & 0xFF
-	trame[8] = duration & 0xFF
-	trame[9] = CheckSum(trame, 0)
-	trame[10] = VMB_EndX
-	return trame
-}
-const blindStop = (adr, part) => {
-	if (part == 1) part = 0x03
-	if (part == 2) part = 0x0C
-	if (part > 2) part = 0x0F
-	let trame = new Uint8Array(8)
-	trame[0] = VMB_StartX
-	trame[1] = VMB_PrioHi
-	trame[2] = adr
-	trame[3] = 0x02     // len
-	trame[4] = 0x04     // stop
-	trame[5] = part
-	trame[6] = CheckSum(trame, 0)
-	trame[7] = VMB_EndX
-	return trame
-}
 
 
 
-// ==================================================================================
-// =                       functions with Listener                                  =
-// ==================================================================================
+// ============================================================================================================
+// =                                 functions with Listener                                                  =
+// ============================================================================================================
 // Basic calculation function are named by Type/Value/Calculation
 // Listener are named as 'survey'/Type/'Value'
 // Function that return a value are named 'VMBRequest'/Type and read a Map
@@ -649,7 +658,6 @@ function EnergyIndexCalculation(msg) {
 	let rawcounter = msg.RAW[6] * 2 ** 24 + msg.RAW[7] * 2 ** 16 + msg.RAW[8] * 2 ** 8 + msg.RAW[9]
 	return Math.round(rawcounter / pulse * 1000) / 1000;
 }
-
 function EnergyPowerCalculation(msg) {
 	let power = 0
 	let pulse = (msg.RAW[5] >> 2) * 100
@@ -688,13 +696,21 @@ function TempMaxCalculation(msg) {
 		return undefined
 	}
 }
+function UpdateModule(key, value) {
+	let m=moduleList.get(key)
+	if (m != undefined) {
+		m.status = value
+		moduleList.set(key, m)
+	}
+}
 
 
+// Function to wait before reading values (async problem)
 async function sleep(timeout) {
 	await new Promise(r => setTimeout(r, timeout));
 }
 
-// ☢️ GESTION ENERGIE
+// 🌡️ GESTION TEMPERATURE
 function surveyTempStatus() {
 	VMBEmitter.on("TempStatus", (msg) => {
 		if (msg.RAW[4] == 0xE6) {
@@ -702,16 +718,19 @@ function surveyTempStatus() {
 			let minT = TempMinCalculation(msg.RAW)
 			let maxT = TempMaxCalculation(msg.RAW)
 			let key = msg.RAW[2] + "-1"
-			VMBTempStatus.set(key, { "current": currentT, "min": minT, "max":maxT, "timestamp": Date.now() })
+			let status = { "current": currentT, "min": minT, "max":maxT, "timestamp": Date.now() }
+			VMBTempStatus.set(key, status)
+			UpdateModule(key, status)
 			if (VMBNameStatus.get(key) == undefined) {
 				VMBWrite(requestName(msg.RAW[2], 1))
+				moduleList.set(key, new VMBmodule(msg.RAW[2], 1, key, "temp", status))
 			}
 			// console.log("Tableau TempStatus : ", VMBTempStatus)
-			console.log("Tableau NameStatus : ", VMBNameStatus)
+			// console.log("Tableau NameStatus : ", VMBNameStatus)
 		}
 	})
 }
-
+// ☢️ GESTION ENERGIE
 function surveyEnergyStatus() {
 	VMBEmitter.on("EnergyStatus", (msg) => {
 		//console.warn("Energy Message", "Fct:" + msg.RAW[4].toString(16), "@" + msg.RAW[2].toString(16)+"-"+(msg.RAW[5]&3).toString(16))
@@ -722,10 +741,12 @@ function surveyEnergyStatus() {
 			let power = EnergyPowerCalculation(msg)
 			let part = (msg.RAW[5] & 3)+1
 			let key = msg.RAW[2] + "-" + part
-			VMBEnergyStatus.set(key, { "index": rawcounter, "power": power, "timestamp": Date.now() })
+			let status = { "index": rawcounter, "power": power, "timestamp": Date.now() }
+			VMBEnergyStatus.set(key, status)
+			UpdateModule(key, status)
 			if (VMBNameStatus.get(key) == undefined) {
-				console.log("Demande de nom pour ", msg.RAW[2]+"-"+part)
 				VMBWrite(requestName(msg.RAW[2], Part2Bin(part)))
+				moduleList.set(key, new VMBmodule(msg.RAW[2], 1, key, "energy", status))
 			}
 			// console.log("Tableau EnergyStatus : ", VMBEnergyStatus)
 
@@ -769,28 +790,29 @@ async function VMBRequestEnergy(adr, part) {
 
 
 
-// ==================================================================================
-// =                          VELBUS SERVER PART                                    =
-// ==================================================================================
+// ============================================================================================================
+// =                                           VELBUS SERVER PART                                             =
+// ============================================================================================================
 
 // see VelbusServer.js 
-let net = require("net");
-const { isUndefined } = require('util');
-let client = new net.Socket();
+import net from 'net'
+import { isUndefined } from 'util';
+// const { isUndefined } = require('util');
+let VelbusConnexion = new net.Socket();
 const VelbusStart = (host, port) => {
-	client.connect(port, host);
+	VelbusConnexion.connect(port, host);
 }
 
-client.on('connect', () => {
-	console.log("connected to server > ", client.remoteAddress, ":", client.remotePort);
+VelbusConnexion.on('connect', () => {
+	console.log("connected to server > ", VelbusConnexion.remoteAddress, ":", VelbusConnexion.remotePort);
 	console.log("--------------------------------------------------------------", '\n\n')
 	surveyTempStatus()
 	surveyEnergyStatus()
 })
 
-client.on('data', (data) => {
+VelbusConnexion.on('data', (data) => {
 	let VMBmessage = {}
-	let desc = '', d = '', crc = 0
+	let desc = ''
 
 
 	// data may contains multiples RAW Velbus frames: send
@@ -814,20 +836,20 @@ client.on('data', (data) => {
 
 	})
 });
-client.on('close', () => {
+VelbusConnexion.on('close', () => {
 	console.log("Closing velbus server connexion");
 });
 // ==================================================================================
 
-module.exports = {
+export {
 	CheckSum,
 	Cut,
 	toHexa,
-	getName, getCode, getDesc,
+	getName, getCode, getDesc, resume,
 	VMBWrite, requestName,
 	relaySet,
 	CounterRequest,
-	blindMove, blindStop,
+	// BlindModule.blind, blindStop, // DEBUG 
 	discover,
 	analyze2Texte,
 	VelbusStart, VMBEmitter,

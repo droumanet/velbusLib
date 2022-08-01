@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-      @import url("https://cdn.jsdelivr.net/npm/minstyle.io@1.1.0/css/minstyle.io.css");
-      /*Doc : https://minstyle.io/docs/*/
-      /* @import url('/css/materialdesignicons.min.css'); ne fonctionne pas */
-      @import url("https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css");
-      @import url("style.css");
-    </style>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dark-mode-switcher@0.0.1/dist/dark.min.js"></script>
-    <title>Velbus client</title>
-  </head>
-  <body>
-    <div class="ms-menu">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    @import url("https://cdn.jsdelivr.net/npm/minstyle.io@1.1.0/css/minstyle.io.css");
+    /*@import url("https://cdn.jsdelivr.net/npm/minstyle.io@2.0.1/dist/css/minstyle.io.min.css");*/
+    /*Doc : https://minstyle.io/docs/*/
+    /* @import url('/css/materialdesignicons.min.css'); ne fonctionne pas */
+    /* Evolution 2.0.1: @import url("https://cdn.jsdelivr.net/npm/minstyle.io@2.0.1/dist/css/minstyle.io.min.css"); */
+    @import url("https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css");
+    @import url("style.css");
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dark-mode-switcher@0.0.1/dist/dark.min.js"></script>
+  <title>Velbus client</title>
+</head>
+
+<body>
+  <div class="ms-menu">
     <div class="ms-menu-logo">
       <a href="https://david.rouma.net">
         <img src="Arvel.png" alt="logo Arvel" height="48" />
@@ -25,15 +29,27 @@
       <input type="checkbox" id="ms-menu-toggle">
       <label for="ms-menu-toggle" class="ms-menu-icon"><span class="mdi mdi-menu"></span></label>
       <ul>
-        <a href="/"> <li><span class="mdi mdi-home-automation"></span> Accueil </li></a>
-        <a href="/analyze"> <li><span class="mdi mdi-glasses"></span> Scanner </li></a>
-        <a href="/"> <li><span class="mdi mdi-lamps-outline"></span> Lampes </li></a>
-        <a href="/"> <li><span class="mdi mdi-window-closed"></span> Volets </li></a>
-        <a href="/"> <li><span class="mdi mdi-thermometer"></span> Sondes </li></a>
-        <a href="/"> <li><span class="mdi mdi-electron-framework"></span> Énergie </li></a>
-        <a href="/installation"><li><span class="mdi mdi-desktop-classic"></span> Installation </li></a>
+        <a href="/">
+          <li><span class="mdi mdi-home-automation"></span> Accueil </li>
+        </a>
+        <a href="/analyze">
+          <li><span class="mdi mdi-glasses"></span> Scanner </li>
+        </a>
+        <a href="/">
+          <li><span class="mdi mdi-lamps-outline"></span> Lampes </li>
+        </a>
+        <a href="/">
+          <li><span class="mdi mdi-window-closed"></span> Volets </li>
+        </a>
+        <a href="/sensor">
+          <li><span class="mdi mdi-thermometer"></span> Sondes </li>
+        </a>
+        <a href="/">
+          <li><span class="mdi mdi-electron-framework"></span> Énergie </li>
+        </a>
+        <a href="/installation">
+          <li><span class="mdi mdi-desktop-classic"></span> Installation </li>
+        </a>
       </ul>
     </nav>
-    </div>
-  </body>
-</html>
+  </div>

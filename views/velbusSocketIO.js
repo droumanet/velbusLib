@@ -18,6 +18,26 @@ let nbMsg = 15;
 let tableMsg = [];
 tableMsg.length = nbMsg;    // force 15 rows even if they're empty
 
+class VMBmodule {
+	address = 0
+	part = 0
+	id = ""			// adr-part : part always be 1 to n, ex. VMB1TS would be 128-1
+	name = ""
+	type = 0
+	status = {}		// object containing the specific status
+	group = []		// could be multiple : room, floor, orientation (west, north...) or some useful tags
+
+	VMBmodule(address, part, key, status) {
+		this.address = address
+		this.part = part
+		this.id = key
+		this.status = status
+	}
+}
+
+let moduleList = new Map()
+moduleList.set("cle","valeur")
+
 function toHexa(donnees) {
   console.log("toHexa ", donnees)
 
@@ -38,16 +58,14 @@ function listerMsg() {
   let texte = "";
   let part = [];
   let timestamp = Date.now()
-  console.log("et voici "+tableMsg.length+" messages.")
   for(const message of tableMsg) {
-    console.log("ListerMsg() => ",tableMsg)
     part[0] = new Date(Date.now()).toLocaleString()
     if (message === undefined) {
       part[1] = "(empty)"
       part[2] = "(empty)"
     } else {
       part[1] = message.Description
-      part[2] = "" // FIXME: toHexa(message.RAW)
+      part[2] = toHexa(message.RAW)
     }
     texte = texte + '<div class="line"><div class="msg">'+part[0]+" "+part[1]+"</div>" + '<div class="other">'+part[2]+"</div><div></div></div>\n";
   }
@@ -92,6 +110,12 @@ socket.on('msg', (msg) => {
   if (tableMsg.length > nbMsg) tableMsg.shift();
   console.log(tableMsg.length)
   document.getElementById('VelbusMsg').innerHTML = listerMsg()
+})
+
+socket.on('resume', (data) => {
+  console.log(moduleList)
+  moduleList = new Map(Object.entries(JSON.parse(data)));
+  
 })
 
 socket.on('connect_failed', function() {

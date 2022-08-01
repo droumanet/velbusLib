@@ -3,11 +3,9 @@
   ----------------------------------------------------------------------------
 */
 
-const CtrlInstallation = {
-    installation : (req, res) => {
-        console.log("*** going to installation.ejs ***")
-        res.render('installation.ejs')
-    }
+function installation(req, res) {
+    console.log("*** going to installation.ejs ***")
+    res.render('installation.ejs')
 }
 
-module.exports = CtrlInstallation
+export {installation}

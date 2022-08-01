@@ -3,11 +3,11 @@
   ----------------------------------------------------------------------------
 */
 
-const CtrlAnalyze = {
-    view : (req, res) => {
-        console.log("*** going to installation.ejs ***")
-        res.render('analyze.ejs')
-    }
+function view(req, res) {
+    console.log("*** going to sensor.ejs ***")
+    res.header("Access-Control-Allow-Origin", "*");
+    res.render('sensor.ejs')
 }
 
-module.exports = CtrlAnalyze
+
+export {view}
