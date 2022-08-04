@@ -28,10 +28,12 @@
 
 import EventEmitter from 'events';
 import { VMBmodule } from './velbuslib_class.mjs';
-import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
-import * as Blind from './velbuslib_blind.mjs'
-import { FrameRequestTemp } from './velbuslib_temp.mjs';
+import { VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
 import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime} from './velbuslib_generic.mjs';
+import { FrameRequestMove, FrameRequestStop, FrameHello} from './velbuslib_blind.mjs'
+import { FrameRequestTemp } from './velbuslib_temp.mjs';
+import { FrameRequestCounter } from './velbuslib_input.mjs';
+
 
 const VMBEmitter = new EventEmitter()
 
@@ -285,16 +287,6 @@ function analyze2Texte(element) {
 
 
 
-/**
- * Convert JS day to Velbus day (offset problem)
- * @param {date} d date as new Date()
- * @returns 0 for monday (d.getDay() would be 1) to 6 for sunday 
- */
-function VelbusDay(d) {
-	if (d.getDay() == 0) return 6
-	else return d.getDay() - 1
-}
-
 // ============================================================================================================
 // =                                          functions VMB ALL                                               =
 // ============================================================================================================
@@ -308,6 +300,10 @@ function VelbusDay(d) {
 	console.error('\x1b[32m', "VelbusLib writing", toHexa(req).join(), '\x1b[0m')
 	VelbusConnexion.write(req);
 	await sleep(10)
+}
+
+function VMBSetTime(day, hour, minute) {
+	VMBWrite(FrameTransmitTime(day, hour, minute))
 }
 
 
@@ -360,35 +356,6 @@ function relayTimer(adr, part, timing = 120) {
 	trame[10] = VMB_EndX;
 	return trame;
 }
-
-
-
-// ==================================================================================
-// =                       functions VMB ENERGY COUNTER                             =
-// ==================================================================================
-
-/**
- * Function to create frame for changing relay's state on a module
- * @param {byte} adr address of module on the bus
- * @param {int} part part to change on module
- * @param {*} state  optionnal : true (on) or false (off), default false
- * @returns  Velbus frame ready to emit
- */
-function CounterRequest(adr, part) {
-	let trame = new Uint8Array(9);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioLo;
-	trame[2] = adr;
-	trame[3] = 0x03;    // len
-	trame[4] = 0xBD;    // Counter Status Request
-	trame[5] = part;
-	trame[6] = 0;
-	trame[7] = CheckSum(trame, 0);
-	trame[8] = VMB_EndX;
-	return trame;
-}
-
-
 
 
 
@@ -505,8 +472,8 @@ async function VMBRequestTemp(adr, part) {
 	let trame = FrameRequestTemp(adr, part);
 	VMBWrite(trame);
 	await sleep(200);
-	if (VMBTempStatus.get(adr + "-" + part) != undefined)
-		return VMBTempStatus.get(adr + "-" + part);
+	let result = VMBTempStatus.get(adr + "-" + part)
+	if ( result != undefined) return result;
 	return { "currentT": 1000, "min": 1000, "max": 1000, "timestamp": Date.now() };
 
 }
@@ -514,14 +481,16 @@ async function VMBRequestTemp(adr, part) {
 async function VMBRequestEnergy(adr, part) {
 	let trame;
 	if (part < 5) {
-		trame = CounterRequest(adr, Part2Bin(part)); // need to change 1 => 1, 2 => 2, 3 => 4 and 4 => 8
+		trame = FrameRequestCounter(adr, Part2Bin(part)); // need to change 1 => 1, 2 => 2, 3 => 4 and 4 => 8
 		VMBWrite(trame);
 		await sleep(200); // VMBEmitter isn't synchronous, need to wait
-		return VMBEnergyStatus.get(adr + "-" + part);
+		let result = VMBEnergyStatus.get(adr + "-" + part)
+		if ( result != undefined) return result;
+		return { "power": undefined, "index": undefined, "timestamp": Date.now() };
 	} else {
 		// part is 0xF or more
 		let tableModule = [];
-		trame = CounterRequest(adr, part || 0xF);
+		trame = FrameRequestCounter(adr, part || 0xF);
 		VMBWrite(trame);
 
 		await sleep(200);
@@ -534,6 +503,11 @@ async function VMBRequestEnergy(adr, part) {
 
 }
 
+// [ ] Write a function that store the request in a array then,
+// [ ] Write a function in receive part, that compare mask & msg and execute callback if true
+function VMBSearchMsg(msg, callBackFct, part=0xFF) {
+
+}
 
 
 // ============================================================================================================
@@ -562,7 +536,7 @@ VelbusConnexion.on('data', (data) => {
 	// data may contains multiples RAW Velbus frames: send
 	Cut(data).forEach(element => {
 		desc = analyze2Texte(element);
-		console.log(desc)	// use as debug
+		console.log(desc, element, typeof(element))	// use as debug
 
 		VMBmessage = { "RAW": element, "Description": desc, "TimeStamp": Date.now(), "Address": element[2], "Function": element[4] }
 		VMBEmitter.emit("msg", VMBmessage);
@@ -590,9 +564,9 @@ export {
 	Cut,
 	toHexa,
 	getName, getCode, getDesc, resume,
-	VMBWrite,
+	VMBWrite, VMBSetTime,
 	relaySet,
-	CounterRequest,
+	FrameRequestCounter as CounterRequest,
 	VelbusStart, VMBEmitter,
 	VMBRequestTemp, VMBRequestEnergy
 }

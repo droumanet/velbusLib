@@ -1,5 +1,5 @@
 // ==================================================================================
-// =                       functions VMB TEMPERATURE                                =
+// =                       GENERIC VELBUS FUNCTIONS                                 =
 // ==================================================================================
 
 import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo, CheckSum} from './velbuslib_constant.js'
@@ -61,6 +61,16 @@ function FrameRequestName (addr, part) {
 	trame[8] = CheckSum(trame, 0);
 	trame[9] = VMB_EndX;
 	return trame
+}
+
+/**
+ * Convert JS day to Velbus day (offset problem)
+ * @param {date} d date as new Date()
+ * @returns 0 for monday (d.getDay() would be 1) to 6 for sunday 
+ */
+ function VelbusDay(d) {
+	if (d.getDay() == 0) return 6
+	else return d.getDay() - 1
 }
 
 /**

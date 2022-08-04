@@ -19,6 +19,8 @@ import VMBserver from './config/VMBServer.json' assert {type:"json"}    // confi
 import * as velbuslib  from "./modules/velbuslib.js"
 import { VMBmodule } from './modules/velbuslib_class.mjs'
 
+import * as TeleInfo from './modules/teleinfo.js'
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 let app = express()
 app.set('view engine', 'ejs')
@@ -58,10 +60,9 @@ let moduleList = new Map()
 // here is an example on how to connect, from HTML/JS page : let listenClients = io.listen(http);
 
 myio.on('connection', (socket) => {
-    console.log(`▶️ SocketIO Connected to @IP:${socket.request.connection.remoteAddress} (client ${socket.id})`)
+    console.log(`▶️ SocketIO (re)connected to @IP:${socket.request.remoteAddress} (client ${socket.id})`)
     moduleList = velbuslib.resume()
     let json = JSON.stringify(Object.fromEntries(moduleList))
-    console.log(json)
     myio.emit("resume", json)
     console.log("▶️ Nombre de modules récupérés : ",moduleList.size)
     socket.on("energy", (msg) => {
@@ -107,7 +108,7 @@ let launchSync = () => {velbuslib.VMBsyncTime()}
 
 let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
     // Synchronize time each day at 5:00 (AM)
-    velbuslib.VMBsyncTime()
+    velbuslib.VMBSetTime(99,99,99)
     console.log("CRON for Time synchronisation done...")
     
 })
@@ -121,6 +122,9 @@ let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
 
     let d = new Date()
     console.log(d.toISOString(), "Launch CRON scripts")
+
+    // TODO Write results in a database (or/and a Global variables ?)
+    // TODO Remove all console.log
     velbuslib.VMBRequestEnergy(0x06, 1)
     .then((msg) => console.log("CRON for PAC  : ", msg, new Date(msg.timestamp).toISOString()))
     .catch((msg) => console.error(msg))

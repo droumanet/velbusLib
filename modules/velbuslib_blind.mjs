@@ -13,7 +13,7 @@ import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioL
  * @param {int} duration in seconds, default 30 seconds
  * @returns Velbus frame ready to emit
  */
- function blindMove(adr, part, state, duration = 30) {
+ function FrameRequestMove(adr, part, state, duration = 30) {
 	if (state > 0) { state = 0x05 } else { state = 0x06 }
 	if (part == 1) { part = 0x03 }
 	else if (part == 2) { part = 0x0C }
@@ -32,7 +32,7 @@ import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioL
 	trame[10] = VMB_EndX
 	return trame
 }
-function blindStop(adr, part) {
+function FrameRequestStop(adr, part) {
 	if (part == 1) part = 0x03
 	if (part == 2) part = 0x0C
 	if (part > 2) part = 0x0F
@@ -48,7 +48,7 @@ function blindStop(adr, part) {
 	return trame
 }
 
-function blindHello (name) {
+function FrameHello (name) {
     console.log("Hello ", name)
 	return name.length
 }
@@ -56,7 +56,7 @@ function blindHello (name) {
 // ==========================================================================================================
 
 export {
-    blindMove,
-    blindStop,
-    blindHello
+    FrameRequestMove,
+    FrameRequestStop,
+    FrameHello
 }

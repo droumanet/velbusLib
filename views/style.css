@@ -18,6 +18,8 @@ div.other {
 div.scroll {
     overflow-x: hidden;
     overflow-y: scroll;
+    width:100%;
+    height: 400px;
     padding: 10px;
   }
 
