@@ -27,7 +27,7 @@
  =================================================================================================================== */
 
 import EventEmitter from 'events';
-import { VMBmodule } from './velbuslib_class.mjs';
+import VMBmodule from './velbuslib_class.mjs';
 import { VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
 import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime} from './velbuslib_generic.mjs';
 import { FrameRequestMove, FrameRequestStop, FrameHello} from './velbuslib_blind.mjs'

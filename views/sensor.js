@@ -11,11 +11,11 @@ socket.on('resume', (data) => {
     moduleList.forEach((v, k) => {
       console.log(v.id, v.fct, v.status.power)
       hx = v.address.toString(16).padStart(2,'0').toUpperCase()
-      if (v.fct=="energy") {
+      if (v.fct.toLowerCase()=="energy") {
         vMain = v.status.power+" w"
         vSecond=v.status.index+" wh"
         symbol = "☢️"
-      } else if (v.fct=="temp") {
+      } else if (v.fct.toLowerCase()=="temp") {
         vMain = v.status.current+"°C"
         vSecond='min:'+v.status.min+" / max:"+v.status.max
         symbol = "🌡️"

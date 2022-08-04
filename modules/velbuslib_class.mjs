@@ -1,4 +1,4 @@
-export class VMBmodule {
+export default class VMBmodule {
 	address = 0
 	part = 0
 	id = ""			// adr-part : part always be 1 to n, ex. VMB1TS would be 128-1
@@ -7,6 +7,7 @@ export class VMBmodule {
 	fct=""			// function like 'temp', 'energy', 'relay', 'lamp', 'dimmer', blind', 'motor'...
 	status = {}		// object containing the specific status
 	group = []		// could be multiple : room, floor, orientation (west, north...) or some useful tags
+	power = 0		// consumption in mA
 
 	constructor(address, part, key, fct, status) {
 		this.address = address

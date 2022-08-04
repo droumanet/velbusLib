@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url'
 import schedule from 'node-schedule'
 import VMBserver from './config/VMBServer.json' assert {type:"json"}    // configuration Velbus server TCP port and address
 import * as velbuslib  from "./modules/velbuslib.js"
-import { VMBmodule } from './modules/velbuslib_class.mjs'
+import VMBmodule from './modules/velbuslib_class.mjs'
 
 import * as TeleInfo from './modules/teleinfo.js'
 
@@ -62,6 +62,9 @@ let moduleList = new Map()
 myio.on('connection', (socket) => {
     console.log(`▶️ SocketIO (re)connected to @IP:${socket.request.remoteAddress} (client ${socket.id})`)
     moduleList = velbuslib.resume()
+    let modulesTeleInfo = TeleInfo.resume()
+    moduleList.set("CPT-1", modulesTeleInfo[0])
+    moduleList.set("CPT-2",modulesTeleInfo[1])
     let json = JSON.stringify(Object.fromEntries(moduleList))
     myio.emit("resume", json)
     console.log("▶️ Nombre de modules récupérés : ",moduleList.size)
@@ -90,7 +93,7 @@ myio.on('connection', (socket) => {
 
 // when a message is detected on Velbus bus, send it to socketIO client
 velbuslib.VMBEmitter.on("msg", (dataSend) => {
-    console.log("Send SocketIO ⏩ ", dataSend.RAW)
+    // console.log("Send SocketIO ⏩ ", dataSend.RAW)
     myio.emit("msg", dataSend)
 });
 
@@ -145,6 +148,8 @@ let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
     velbuslib.VMBRequestTemp(0x7C, 1)
     .then((msg) => console.log("Temp Grenier  : ", msg, new Date(msg.timestamp).toISOString()))
     .catch((msg) => console.error(msg))
+
+
 })
 
 let every5min = schedule.scheduleJob('*/5 * * * *', () => {
