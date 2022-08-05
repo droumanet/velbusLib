@@ -514,18 +514,31 @@ function VMBSearchMsg(msg, callBackFct, part=0xFF) {
 // =                                           VELBUS SERVER PART                                             =
 // ============================================================================================================
 
-// see VelbusServer.js 
+let Cnx = {host: "127.0.0.1", port:8445}
 import net from 'net'
 let VelbusConnexion = new net.Socket();
 const VelbusStart = (host, port) => {
+	Cnx.host = host
+	Cnx.port = port
 	VelbusConnexion.connect(port, host);
 }
+
+let ReconnectTimer
+let DisconnectDate
+
 
 VelbusConnexion.on('connect', () => {
 	console.log("connected to server > ", VelbusConnexion.remoteAddress, ":", VelbusConnexion.remotePort);
 	console.log("--------------------------------------------------------------", '\n\n')
 	surveyTempStatus()
 	surveyEnergyStatus()
+	if (ReconnectTimer != undefined) {
+		let duration = ((Date.now() - DisconnectDate)/1000)
+		console.log("Reconnect after ", Math.round(duration/60), "and", duration%60, "seconds")
+		clearInterval(ReconnectTimer)
+		ReconnectTimer = undefined
+	}
+
 })
 
 VelbusConnexion.on('data', (data) => {
@@ -554,8 +567,23 @@ VelbusConnexion.on('data', (data) => {
 
 	})
 });
+VelbusConnexion.on('error', (err) => {
+	console.log("Unexpected lost velbus server connexion");
+	console.log("   Velbus reusedSocket:",VelbusConnexion.reusedSocket, "   err.code:", err.code)
+	if (VelbusConnexion.reusedSocket && err.code === 'ECONNRESET') {
+        retriableRequest();
+      }
+
+});
 VelbusConnexion.on('close', () => {
 	console.log("Closing velbus server connexion");
+
+	// Try to reconnect every 10 seconds
+	DisconnectDate = Date.now()
+	ReconnectTimer = setInterval(() => {
+		// WIP : Travail en cours pour reconnexion auto
+		VelbusConnexion.connect(Cnx.port, Cnx.host)
+	}, 10*1000)
 });
 // ==================================================================================
 

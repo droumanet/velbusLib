@@ -140,6 +140,9 @@ let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
     velbuslib.VMBRequestEnergy(0x40, 2)
     .then((msg) => console.log("CRON for domo  : ", msg, new Date(msg.timestamp).toISOString()))
     .catch((msg) => console.error(msg))
+    velbuslib.VMBRequestEnergy(0x40, 3)
+    .then((msg) => console.log("CRON for VMC  : ", msg, new Date(msg.timestamp).toISOString()))
+    .catch((msg) => console.error(msg))
 
 
     velbuslib.VMBRequestTemp(0x74, 1)
