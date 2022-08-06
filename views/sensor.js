@@ -8,9 +8,15 @@ socket.on('resume', (data) => {
     let vMain = ""
     let vSecond = ""
     let symbol = ""
+    let d=0
+    let dnow= new Date()
+    let horaire = ""
     moduleList.forEach((v, k) => {
       console.log(v.id, v.fct, v.status.power)
       hx = v.address.toString(16).padStart(2,'0').toUpperCase()
+      d = new Date(v.status.timestamp)
+      horaire = d.toLocaleString()
+      if ((dnow-d)/1000 > 1*70) { classTime="smallRed" } else {classTime="small"}
       if (v.fct.toLowerCase()=="energy") {
         vMain = v.status.power+" w"
         vSecond=v.status.index+" wh"
@@ -31,6 +37,7 @@ socket.on('resume', (data) => {
             <h2>${vMain}</h2>
             <p>${vSecond}</p>
             <p>$${hx} (${v.id})</p>
+            <p class="${classTime}">${horaire}</p>
           </div>
         </div>
         </a>

@@ -534,7 +534,7 @@ VelbusConnexion.on('connect', () => {
 	surveyEnergyStatus()
 	if (ReconnectTimer != undefined) {
 		let duration = ((Date.now() - DisconnectDate)/1000)
-		console.log("Reconnect after ", Math.round(duration/60), "and", duration%60, "seconds")
+		console.log("Reconnect after ", Math.round(duration/60), "minuts and", math.round(duration%60), "seconds")
 		clearInterval(ReconnectTimer)
 		ReconnectTimer = undefined
 	}

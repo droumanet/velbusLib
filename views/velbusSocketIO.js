@@ -13,7 +13,7 @@
      ================================================================================================
 */
 // initialisation
-const socket = io("http://192.168.168.248:8002");
+const socket = io("http://teo-tea.hd.free.fr:8002");
 let nbMsg = 500;
 let tableMsg = [];
 //tableMsg.length = nbMsg;    // force 15 rows even if they're empty

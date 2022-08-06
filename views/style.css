@@ -31,3 +31,12 @@ div.scroll {
 a.nolink {
     text-decoration: none;
 }
+
+.small {
+    font-size: 0.7em;
+    color:darkgray;
+}
+.smallRed {
+    font-size: 0.7em;
+    color:darkgoldenrod;
+}
