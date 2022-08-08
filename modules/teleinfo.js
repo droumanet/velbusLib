@@ -53,8 +53,7 @@ function decodeDate(m) {
     let msg = m.split(" ")
     // let HeureEte = "E" == m[0].substr(0,1)
     if (msg[0].length >12) {
-        let d = "20"+msg[0].substr(1,2) + "-" + msg[0].substr(3,2) + "-" + msg[0].substr(5,2) + " " + msg[0].substr(7,2) + ":" + msg[0].substr(9,2) + ":" + msg[0].substr(11,2)
-        return d
+        return "20"+msg[0].substr(1,2) + "-" + msg[0].substr(3,2) + "-" + msg[0].substr(5,2) + " " + msg[0].substr(7,2) + ":" + msg[0].substr(9,2) + ":" + msg[0].substr(11,2)
     } 
     return msg[0]
 
@@ -62,13 +61,12 @@ function decodeDate(m) {
 // decode TeleInfo max power :"DATE POWER"
 function decodeSMAXNpower(m) {
     let msg = m.split(" ")
-    console.log(m, "=>",msg)
     return msg[1]*1
 }
 
 
-TeleInfo.on('listening', (message) => {
-    console.log("listening from TeleInfo", message)
+TeleInfo.on('listening', () => {
+    console.log("Listening from TeleInfo UDP services")
 })
 TeleInfo.on('message', (message) => {
     let maVariable = JSON.parse(message.toString())

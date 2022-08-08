@@ -27,7 +27,7 @@
  =================================================================================================================== */
 
 import EventEmitter from 'events';
-import VMBmodule from './velbuslib_class.mjs';
+import VMBmodule from '../models/velbuslib_class.mjs';
 import { VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
 import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime} from './velbuslib_generic.mjs';
 import { FrameRequestMove, FrameRequestStop, FrameHello} from './velbuslib_blind.mjs'
@@ -204,7 +204,7 @@ function analyze2Texte(element) {
 	let fctVelbus = Number(element[4])
 	let lenVelbus = element[3] & 0x0F
 	let adrVelbus = element[2]
-	let texte = adrVelbus.toString(16) + "  " + getFunction(fctVelbus) + " (" + fctVelbus.toString(16).toUpperCase() + ") ► "
+	let texte = "@:"+adrVelbus.toString(16) + " Fct:" + fctVelbus.toString(16).toUpperCase() + "("+getFunction(fctVelbus)+") ► "
 	let buttonOn = ""
 	let keyModule = ""
 
@@ -226,14 +226,14 @@ function analyze2Texte(element) {
 			if (element[10] != 0xFF && element[11] != 0xFF) {
 				conso = Math.round((1000 * 1000 * 3600 / (element[10] * 256 + element[11])) / division * 10) / 10;
 			}
-			texte += "  " +localModuleName(keyModule)+" "+ compteur + " KW, (Instantané :" + conso + " W) ";
+			texte += localModuleName(keyModule)+" "+ compteur + " KW, (Inst. :" + conso + " W) ";
 			break;
 		case 0xE6:
 			keyModule=adrVelbus+"-1"
-			texte += "  " +localModuleName(keyModule) + " " +TempCurrentCalculation(element) + "°C";
+			texte += localModuleName(keyModule) + " " +TempCurrentCalculation(element) + "°C";
 			break;
 		case 0xEA:
-			texte += "  " +localModuleName(keyModule) + " " + Number(element[8]) / 2 + "°C";
+			texte += localModuleName(keyModule) + " " + Number(element[8]) / 2 + "°C";
 			break;
 		case 0xF0:
 		case 0xF1:
@@ -297,15 +297,22 @@ function analyze2Texte(element) {
  * @param {*} res not used
  */
  async function VMBWrite(req) {
-	console.error('\x1b[32m', "VelbusLib writing", toHexa(req).join(), '\x1b[0m')
+	console.log('\x1b[32m', "VelbusLib writing", '\x1b[0m', toHexa(req).join())
 	VelbusConnexion.write(req);
 	await sleep(10)
 }
 
+// Synchronize Velbus with host. If day/hour/minute are wrong (ie. 99) then use system date
 function VMBSetTime(day, hour, minute) {
 	VMBWrite(FrameTransmitTime(day, hour, minute))
 }
 
+// Send a scan on all addresses
+function VMBscanAll() {
+	for (let t=0; t<256; t++) {
+		VMBWrite(FrameModuleScan(t))
+	}
+}
 
 // ==================================================================================
 // =                          functions VMB RELAY                                   =
@@ -534,7 +541,7 @@ VelbusConnexion.on('connect', () => {
 	surveyEnergyStatus()
 	if (ReconnectTimer != undefined) {
 		let duration = ((Date.now() - DisconnectDate)/1000)
-		console.log("Reconnect after ", Math.round(duration/60), "minuts and", math.round(duration%60), "seconds")
+		console.log("Reconnect after ", Math.round(duration/60), "minuts and", Math.round(duration%60), "seconds")
 		clearInterval(ReconnectTimer)
 		ReconnectTimer = undefined
 	}
@@ -549,7 +556,7 @@ VelbusConnexion.on('data', (data) => {
 	// data may contains multiples RAW Velbus frames: send
 	Cut(data).forEach(element => {
 		desc = analyze2Texte(element);
-		console.log(desc, element, typeof(element))	// use as debug
+		console.log(desc, element)	// use as debug
 
 		VMBmessage = { "RAW": element, "Description": desc, "TimeStamp": Date.now(), "Address": element[2], "Function": element[4] }
 		VMBEmitter.emit("msg", VMBmessage);
@@ -568,7 +575,9 @@ VelbusConnexion.on('data', (data) => {
 	})
 });
 VelbusConnexion.on('error', (err) => {
-	console.log("Unexpected lost velbus server connexion");
+	console.log("Unexpected error connexion");
+
+	// TODO: Check if this part is needed (lost connexion start event 'close') and how...
 	console.log("   Velbus reusedSocket:",VelbusConnexion.reusedSocket, "   err.code:", err.code)
 	if (VelbusConnexion.reusedSocket && err.code === 'ECONNRESET') {
         retriableRequest();
@@ -581,7 +590,6 @@ VelbusConnexion.on('close', () => {
 	// Try to reconnect every 10 seconds
 	DisconnectDate = Date.now()
 	ReconnectTimer = setInterval(() => {
-		// WIP : Travail en cours pour reconnexion auto
 		VelbusConnexion.connect(Cnx.port, Cnx.host)
 	}, 10*1000)
 });

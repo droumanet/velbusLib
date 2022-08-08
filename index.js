@@ -119,7 +119,7 @@ let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
 // Timer part (see https://crontab.guru)
 // Cron format : SS MM HH Day Month weekday
 
-let everyHour = schedule.scheduleJob('*/10 * * * * *', () => {
+let everyHour = schedule.scheduleJob('* */1 * * * * *', () => {
     // call every minute energy counter
     // DEBUG call every 10 secondes for debuging
 
