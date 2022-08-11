@@ -9,21 +9,26 @@ function getPower(callback){
 }
 
 // WIP sample for power
-setPowerDay = function(value, callback){
-    let sql='INSERT INTO pwrDay (,) VALUES ?';
-    
-    // DEBUG example
+/**
+ * 
+ */
+async function setPowerDay(values){
+    let sql='INSERT INTO pwrDay (powerconsohp,powerconsohc, pwrprod, pwrprodmax) VALUES ?';
+
+    /* DEBUG example for many insert in one time
     let values = [
         ['value1', 'value2'],
         ['value1', 'value2']
     ]
-    db.query(sql, [values], function (err, data) {
+    */
+    await db.query(sql, [values], function (err, data) {
         if (err) throw err;
-
         return data.affectedRows;
     });
+   
 }
 /*
+// Original example
 addFlower:function(flowerDetails,callback){
     var sql = 'INSERT INTO flori SET ?';
     db.query(sql, flowerDetails,function (err, data) {

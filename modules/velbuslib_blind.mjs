@@ -3,7 +3,7 @@
 // ============================================================================================================
 // [ ] Write this module as CtrlSensor.js
 
-import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo, CheckSum} from './velbuslib_constant.js'
+import * as VMB from './velbuslib_constant.js'
 
 /**
  * Function to create frame for moving UP or DOWN blind on a module
@@ -19,8 +19,8 @@ import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioL
 	else if (part == 2) { part = 0x0C }
 	else { part = 0x0F }
 	let trame = new Uint8Array(11)
-	trame[0] = VMB_StartX
-	trame[1] = VMB_PrioHi
+	trame[0] = VMB.StartX
+	trame[1] = VMB.PrioHi
 	trame[2] = adr
 	trame[3] = 0x05   // len
 	trame[4] = state
@@ -28,8 +28,8 @@ import {VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioL
 	trame[6] = duration >> 16 & 0xFF
 	trame[7] = duration >> 8 & 0xFF
 	trame[8] = duration & 0xFF
-	trame[9] = CheckSum(trame, 0)
-	trame[10] = VMB_EndX
+	trame[9] = VMB.CheckSum(trame, 0)
+	trame[10] = VMB.EndX
 	return trame
 }
 function FrameRequestStop(adr, part) {
@@ -37,14 +37,14 @@ function FrameRequestStop(adr, part) {
 	if (part == 2) part = 0x0C
 	if (part > 2) part = 0x0F
 	let trame = new Uint8Array(8)
-	trame[0] = VMB_StartX
-	trame[1] = VMB_PrioHi
+	trame[0] = VMB.StartX
+	trame[1] = PrioHi
 	trame[2] = adr
 	trame[3] = 0x02     // len
 	trame[4] = 0x04     // stop
 	trame[5] = part
-	trame[6] = CheckSum(trame, 0)
-	trame[7] = VMB_EndX
+	trame[6] = VMB.CheckSum(trame, 0)
+	trame[7] = VMB.EndX
 	return trame
 }
 

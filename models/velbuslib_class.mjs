@@ -1,4 +1,6 @@
-export default class VMBmodule {
+ import * as VMB from '../modules/velbuslib_constant.js'
+ 
+ class VMBsubmodule {
 	address = 0
 	part = 0
 	id = ""			// adr-part : part always be 1 to n, ex. VMB1TS would be 128-1
@@ -16,4 +18,28 @@ export default class VMBmodule {
 		this.fct = fct
 		this.status = status
 	}
+}
+
+class VMBmodule {
+	address = 0
+	type = 0
+	partNumber = 0
+	description = ""
+	location = ""
+	buildWeek = 0
+	buildYear = 0
+	busErrorTX = 0
+	busErrorRX = 0
+	busErrorOFF = 0
+
+	constructor(address, type) {
+		this.address = address
+		this.type = type
+
+
+	}
+}
+
+export {
+	VMBmodule, VMBsubmodule
 }

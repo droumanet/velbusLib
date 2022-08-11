@@ -27,9 +27,9 @@
  =================================================================================================================== */
 
 import EventEmitter from 'events';
-import VMBmodule from '../models/velbuslib_class.mjs';
-import { VMBTypemodules, VMBfunction, VMB_StartX, VMB_EndX, VMB_PrioHi, VMB_PrioLo} from './velbuslib_constant.js'
-import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime} from './velbuslib_generic.mjs';
+import {VMBmodule, VMBsubmodule} from '../models/velbuslib_class.mjs';
+import * as VMB from './velbuslib_constant.js'
+import { FrameModuleScan, FrameRequestName, FrameTransmitTime, FrameRequestTime, CheckSum} from './velbuslib_generic.mjs';
 import { FrameRequestMove, FrameRequestStop, FrameHello} from './velbuslib_blind.mjs'
 import { FrameRequestTemp } from './velbuslib_temp.mjs';
 import { FrameRequestCounter } from './velbuslib_input.mjs';
@@ -47,22 +47,7 @@ let VMBEnergyStatus = new Map()
 // =                                    Functions for internal use                                            =
 // ============================================================================================================
 
-/**
- * Checksum is able to calculate the frame checksum
- * @param {Buffer} frame a Velbus frame from 0F xxxxx to 04
- * @param {number} full number removed from frame length (default=1)
- * @returns {number} sum all bytes then XOR FF + 1
- */
-const CheckSum = (frame, full = 1) => {
-	let crc = 0;
-	for (let i = 0; i < frame.length - 1 - full; i++) {
-		crc = crc + (frame[i] & 0xFF);
-	}
-	crc = crc ^ 0xFF;
-	crc = crc + 1;
-	crc = crc & 0xFF;
-	return crc;
-}
+
 
 /**
  * Cut split messages that are in the same frame. Example 0F...msg1...04 0F...msg2...04
@@ -141,53 +126,6 @@ function Part2Bin(partValue) {
 	return 2**(partValue-1)
 }
 
-/**
- * send back name module from code module
- * @param {Number} code 
- * @returns name of module
- */
-const getName = (code) => {
-	let result = VMBTypemodules.find(item => Number(item.code) == code);
-	if (result !== undefined) return result.name;
-	return "unknown";
-};
-
-/**
- * send back code module from name module
- * @param {String} name 
- * @returns code of module
- */
-const getCode = (name) => {
-	for (let item of VMBTypemodules) {
-		if (item.name == name) return Number(item.code);
-	}
-	return 0x00;
-};
-
-// send back description module from code or name module
-const getDesc = (element) => {
-	// if string then search by name...
-	if (typeOf(element) == string) {
-		for (let item of VMBTypemodules) {
-			if (item.name == element) return item.desc
-		}
-		return "unknown"
-	} else {
-		// ... search by code
-		for (let item of VMBTypemodules) {
-			if (Number(item.code) == element) return item.desc
-		}
-		return "unknown"
-	}
-
-}
-
-// send back function name module from function code module
-function getFunction(code) {
-	let result = VMBfunction.find(item => Number(item.code) == code)
-	if (result !== undefined) return result.name
-	return "unknown"
-}
 function localModuleName(k) {
 	let myModule = VMBNameStatus.get(k)
 	if (myModule == undefined) return "****"
@@ -204,7 +142,7 @@ function analyze2Texte(element) {
 	let fctVelbus = Number(element[4])
 	let lenVelbus = element[3] & 0x0F
 	let adrVelbus = element[2]
-	let texte = "@:"+adrVelbus.toString(16) + " Fct:" + fctVelbus.toString(16).toUpperCase() + "("+getFunction(fctVelbus)+") ► "
+	let texte = "@:"+adrVelbus.toString(16) + " Fct:" + fctVelbus.toString(16).toUpperCase() + "("+VMB.getFunctionName(fctVelbus)+") ► "
 	let buttonOn = ""
 	let keyModule = ""
 
@@ -238,8 +176,10 @@ function analyze2Texte(element) {
 		case 0xF0:
 		case 0xF1:
 		case 0xF2:
+			console.log("-------------- NAME "+element[4].toString(16)+" ------------------")
 			let key = adrVelbus+"-"+Bin2Part(element[5])
 			let myModule = VMBNameStatus.get(key)
+			console.log("🔁 VMBNameStatus.get("+key+")=",myModule)
 			let max=6
 			if (myModule == undefined) {
 				VMBNameStatus.set(key, {"address":element[2],"name":"", "n1":"", "n2":"", "n3":"", "flag":0})
@@ -257,7 +197,7 @@ function analyze2Texte(element) {
 			n[2]=myModule.n3
 			n[idx]=""
 			
-			// console.log("NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
+			console.log("🔁 NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
 			for (let t=0; t<max; t++) {
 				if (element[6+t] != 0xFF) {
 					n[idx]=n[idx]+String.fromCharCode(element[6+t])
@@ -274,15 +214,19 @@ function analyze2Texte(element) {
 			}
 			VMBNameStatus.set(key, {"address":element[2],"name":n[0]+n[1]+n[2], "n1":n[0], "n2":n[1], "n3":n[2], "flag":flag|f})
 			texte += " Transmit it name '"+n[0]+n[1]+n[2]+"'"
-			break;
+			break
 		case 0xFB:
 			buttonOn = toButtons(element[7], 4);
 			texte += " [" + buttonOn + "]"
-			break;
+			break
+		case 0xFF: // Module Type Transmit
+			let moduleType = element[5]
+			console.log(adrVelbus,"Detected module type ", moduleType)
+			break
 		default:
-			break;
+			break
 	}
-	return texte;
+	return texte
 }
 
 
@@ -309,7 +253,10 @@ function VMBSetTime(day, hour, minute) {
 
 // Send a scan on all addresses
 function VMBscanAll() {
+	let fr
 	for (let t=0; t<256; t++) {
+		fr = FrameModuleScan(t)
+		if (t == 0xDB) { console.log(fr, 'CheckSum should be 0xDB')}
 		VMBWrite(FrameModuleScan(t))
 	}
 }
@@ -327,14 +274,14 @@ function VMBscanAll() {
  */
 function relaySet(adr, part, state = false) {
 	let trame = new Uint8Array(8);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioHi;
+	trame[0] = StartX;
+	trame[1] = PrioHi;
 	trame[2] = adr;
 	trame[3] = 0x02;    // len
 	if (state) trame[4] = 0x02; else trame[4] = 0x01;     // true=ON, false=OFF 
 	trame[5] = part;
 	trame[6] = CheckSum(trame, 0);
-	trame[7] = VMB_EndX;
+	trame[7] = EndX;
 	return trame;
 }
 
@@ -350,8 +297,8 @@ function relayTimer(adr, part, timing = 120) {
 	let tmid = timing >> 8 & 0xFF;
 	let tlow = timing & 0xFF;
 	let trame = new Uint8Array(8);
-	trame[0] = VMB_StartX;
-	trame[1] = VMB_PrioHi;
+	trame[0] = StartX;
+	trame[1] = PrioHi;
 	trame[2] = adr;
 	trame[3] = 0x05;    // len
 	trame[4] = 0x03;
@@ -360,7 +307,7 @@ function relayTimer(adr, part, timing = 120) {
 	trame[7] = tmid;
 	trame[8] = tlow;
 	trame[9] = CheckSum(trame, 0);
-	trame[10] = VMB_EndX;
+	trame[10] = EndX;
 	return trame;
 }
 
@@ -443,7 +390,7 @@ function surveyTempStatus() {
 			UpdateModule(key, status)
 			if (VMBNameStatus.get(key) == undefined) {
 				VMBWrite(FrameRequestName(msg.RAW[2], 1))
-				moduleList.set(key, new VMBmodule(msg.RAW[2], 1, key, "temp", status))
+				moduleList.set(key, new VMBsubmodule(msg.RAW[2], 1, key, "temp", status))
 			}
 			// console.log("Tableau TempStatus : ", VMBTempStatus)
 			// console.log("Tableau NameStatus : ", VMBNameStatus)
@@ -466,7 +413,7 @@ function surveyEnergyStatus() {
 			UpdateModule(key, status)
 			if (VMBNameStatus.get(key) == undefined) {
 				VMBWrite(FrameRequestName(msg.RAW[2], Part2Bin(part)))
-				moduleList.set(key, new VMBmodule(msg.RAW[2], 1, key, "energy", status))
+				moduleList.set(key, new VMBsubmodule(msg.RAW[2], 1, key, "energy", status))
 			}
 			// console.log("Tableau EnergyStatus : ", VMBEnergyStatus)
 
@@ -535,10 +482,11 @@ let DisconnectDate
 
 
 VelbusConnexion.on('connect', () => {
-	console.log("connected to server > ", VelbusConnexion.remoteAddress, ":", VelbusConnexion.remotePort);
+	console.log("  ✅ connected to server > ", VelbusConnexion.remoteAddress, ":", VelbusConnexion.remotePort);
 	console.log("--------------------------------------------------------------", '\n\n')
 	surveyTempStatus()
 	surveyEnergyStatus()
+
 	if (ReconnectTimer != undefined) {
 		let duration = ((Date.now() - DisconnectDate)/1000)
 		console.log("Reconnect after ", Math.round(duration/60), "minuts and", Math.round(duration%60), "seconds")
@@ -546,6 +494,12 @@ VelbusConnexion.on('connect', () => {
 		ReconnectTimer = undefined
 	}
 
+})
+
+VelbusConnexion.once('connect', () => {
+	setTimeout(() => {
+		VMBscanAll()
+	}, 1000)
 })
 
 VelbusConnexion.on('data', (data) => {
@@ -575,32 +529,32 @@ VelbusConnexion.on('data', (data) => {
 	})
 });
 VelbusConnexion.on('error', (err) => {
-	console.log("Unexpected error connexion");
-
-	// TODO: Check if this part is needed (lost connexion start event 'close') and how...
-	console.log("   Velbus reusedSocket:",VelbusConnexion.reusedSocket, "   err.code:", err.code)
+	// FIXME: Check if this part is needed (lost connexion start event 'close') and how...
+	console.log("  ❌ Connexion Error! Velbus reusedSocket:",VelbusConnexion.reusedSocket, "   err.code:", err.code)
 	if (VelbusConnexion.reusedSocket && err.code === 'ECONNRESET') {
-        retriableRequest();
+        // retriableRequest();
       }
 
 });
 VelbusConnexion.on('close', () => {
 	console.log("Closing velbus server connexion");
-
+});
+VelbusConnexion.once('close', () => {
 	// Try to reconnect every 10 seconds
+	console.log("  📶 Try velbus server reconnexion");
 	DisconnectDate = Date.now()
 	ReconnectTimer = setInterval(() => {
 		VelbusConnexion.connect(Cnx.port, Cnx.host)
 	}, 10*1000)
-});
+})
 // ==================================================================================
 
 export {
 	CheckSum,
 	Cut,
 	toHexa,
-	getName, getCode, getDesc, resume,
-	VMBWrite, VMBSetTime,
+	VMB, resume,
+	VMBWrite, VMBSetTime, VMBscanAll,
 	relaySet,
 	FrameRequestCounter as CounterRequest,
 	VelbusStart, VMBEmitter,

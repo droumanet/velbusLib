@@ -1,11 +1,11 @@
 // frame part
-export const VMB_StartX = 0x0F;
-export const VMB_EndX = 0x04;
-export const VMB_PrioHi = 0xF8;
-export const VMB_PrioLo = 0xFB;
+const StartX = 0x0F;
+const EndX = 0x04;
+const PrioHi = 0xF8;
+const PrioLo = 0xFB;
 
 //#region modules AS Modules (code, name, desc, power (mA, for 15v BUS), partNumber)
-export let VMBTypemodules    = 
+let moduleTypes    = 
 [{code : "0x01", name :  "VMB8PB",    power:30,   desc : "8 simple push buttons module", PartNb : 8},
  {code : "0x02", name :  "VMB1RY",    power: 50,  desc : "1 relay (with physical button) module", PartNb : 1},
  {code : "0x03", name :  "VMB1BL",    power: 100, desc : "1 blind (with physical button) module", PartNb : 1},
@@ -52,7 +52,7 @@ export let VMBTypemodules    =
 //#endregion
 
 //#region VMBfunction AS Velbus functions (code, name)
-export let VMBfunction    = 
+let functionCode    = 
 [{code : 0x00, name :  "VMBInputStatusResponse"},
 {code : 0x01, name :  "VMBRelayOff"},
 {code : 0x02, name :  "VMBRelayOn"},
@@ -123,18 +123,62 @@ export let VMBfunction    =
 //#endregion
 
 /**
- * Checksum is able to calculate the frame checksum
- * @param {Buffer} frame a Velbus frame from 0F xxxxx to 04
- * @param {number} full number removed from frame length (default=1)
- * @returns {number} sum all bytes then XOR FF + 1
+ * send back name module from code module
+ * @param {Number} code 
+ * @returns name of module
  */
- export const CheckSum = (frame, full = 1) => {
-	let crc = 0;
-	for (let i = 0; i < frame.length - 1 - full; i++) {
-		crc = crc + (frame[i] & 0xFF);
+ const getNameFromCode = (code) => {
+	let result = moduleTypes.find(item => Number(item.code) == code);
+	if (result !== undefined) return result.name;
+	return "unknown";
+};
+
+/**
+ * send back code module from name module
+ * @param {String} name 
+ * @returns code of module
+ */
+const getCodeFromName = (name) => {
+	for (let item of moduleTypes) {
+		if (item.name == name) return Number(item.code);
 	}
-	crc = crc ^ 0xFF;
-	crc = crc + 1;
-	crc = crc & 0xFF;
-	return crc;
+	return 0x00;
+};
+
+// send back description module from code or name module
+const getDesc = (element) => {
+	// if string then search by name...
+	if (typeOf(element) == string) {
+		for (let item of moduleTypes) {
+			if (item.name == element) return item.desc
+		}
+		return "unknown"
+	} else {
+		// ... search by code
+		for (let item of moduleTypes) {
+			if (Number(item.code) == element) return item.desc
+		}
+		return "unknown"
+	}
+
 }
+
+// send back function name module from function code module
+function getFunctionName(code) {
+	let result = functionCode.find(item => Number(item.code) == code)
+	if (result !== undefined) return result.name
+	return "unknown"
+}
+
+
+export {
+	StartX, EndX, PrioHi, PrioLo,
+	moduleTypes, functionCode,
+	getCodeFromName, getDesc, getFunctionName, getNameFromCode 
+}
+
+
+/*
+moduleTypes as VMBTypemodules, functionCode as VMBfunction,
+	getCodeFromName as getCode, getDesc, getFunctionName as getFunction, getName 
+*/

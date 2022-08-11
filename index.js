@@ -17,9 +17,12 @@ import { fileURLToPath } from 'url'
 import schedule from 'node-schedule'
 import VMBserver from './config/VMBServer.json' assert {type:"json"}    // configuration Velbus server TCP port and address
 import * as velbuslib  from "./modules/velbuslib.js"
-import VMBmodule from './modules/velbuslib_class.mjs'
+import {VMBmodule, VMBsubmodule} from './models/velbuslib_class.mjs'
+import { getSunrise, getSunset } from 'sunrise-sunset-js'
 
 import * as TeleInfo from './modules/teleinfo.js'
+
+const sunset = getSunset(51.4541, -2.5920);
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 let app = express()
@@ -37,7 +40,7 @@ app.use(cors({
 // FIXME CDN ok, npm isn't. install @mdi/font doesn't works with following line
 // tried with ./node_modules/... , node_modules/, /node_modules
 app.use('/css', express.static(path.join(__dirname, 'node_modules/@mdi/font/css')))
-console.error(path.join(__dirname, 'node_modules/@mdi/font/css'))
+console.error("CSS via NPM : ",path.join(__dirname, 'node_modules/@mdi/font/css'))
 
 // create websocket with existing port HTTP for web client
 let myhttp = http.createServer(app);
@@ -63,8 +66,8 @@ myio.on('connection', (socket) => {
     console.log(`▶️ SocketIO (re)connected to @IP:${socket.request.remoteAddress} (client ${socket.id})`)
     moduleList = velbuslib.resume()
     let modulesTeleInfo = TeleInfo.resume()
-    moduleList.set("CPT-1", modulesTeleInfo[0])
-    moduleList.set("CPT-2",modulesTeleInfo[1])
+    moduleList.set("300-1", modulesTeleInfo[0])
+    moduleList.set("300-2",modulesTeleInfo[1])
     let json = JSON.stringify(Object.fromEntries(moduleList))
     myio.emit("resume", json)
     console.log("▶️ Nombre de modules récupérés : ",moduleList.size)
@@ -85,9 +88,7 @@ myio.on('connection', (socket) => {
         console.log("▶️ Action on blind: ", msg)
     })
     socket.on('discover', () => {
-        for (let t = 1; t < 255; t++) {
-            velbuslib.discover(t)
-        }
+
     })
 })
 
@@ -105,7 +106,11 @@ myhttp.listen(portWeb, () => {
 
 myio.listen(myhttp)
 
+
 // MAIN CODE END ==================================================================================
+// Timer part (see https://crontab.guru)
+// Cron format : SS MM HH Day Month weekday
+
 
 let launchSync = () => {velbuslib.VMBsyncTime()}
 
@@ -116,8 +121,12 @@ let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
     
 })
 
-// Timer part (see https://crontab.guru)
-// Cron format : SS MM HH Day Month weekday
+let everyDay23h59 = schedule.scheduleJob('50 59 23 */1 * * *', () => {
+    // Record index and some jobs to clear old values
+    // read values lists and send to SQL
+    console.log("CRON for Time synchronisation done...")
+    
+})
 
 let everyHour = schedule.scheduleJob('* */1 * * * * *', () => {
     // call every minute energy counter
@@ -126,34 +135,28 @@ let everyHour = schedule.scheduleJob('* */1 * * * * *', () => {
     let d = new Date()
     console.log(d.toISOString(), "Launch CRON scripts")
 
-    // TODO Write results in a database (or/and a Global variables ?)
-    // TODO Remove all console.log
-    velbuslib.VMBRequestEnergy(0x06, 1)
-    .then((msg) => console.log("CRON for PAC  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
-    velbuslib.VMBRequestEnergy(0x06, 3)
-    .then((msg) => console.log("CRON for EV Charge  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
-    velbuslib.VMBRequestEnergy(0x40, 1)
-    .then((msg) => console.log("CRON for clim  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
-    velbuslib.VMBRequestEnergy(0x40, 2)
-    .then((msg) => console.log("CRON for domo  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
-    velbuslib.VMBRequestEnergy(0x40, 3)
-    .then((msg) => console.log("CRON for VMC  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
+    // WIP Write results in a database (or/and a Global variables ?)
+    // Scan all module and search for a function
+    console.log("CRON ============================")
+    if (moduleList.size > 0) {
+        console.log("THERE ARE SOME MODULES")
+        moduleList.forEach((v, k) => {
+            console.log(v.id, v.fct, v.status.power)
+            if (v.fct.find(e => e.toLowerCase() == "energy")) {
+                velbuslib.VMBRequestEnergy(v.address, v.part)
+                .then((msg) => console.log("CRON ", msg))
+                .catch((msg) => console.error(msg))
+            }
 
-
-    velbuslib.VMBRequestTemp(0x74, 1)
-    .then((msg) => console.log("Temp Exterieur  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
-    velbuslib.VMBRequestTemp(0x7C, 1)
-    .then((msg) => console.log("Temp Grenier  : ", msg, new Date(msg.timestamp).toISOString()))
-    .catch((msg) => console.error(msg))
-
-
+            if (v.fct.find(e => e.toLowerCase() == "temp")) {
+                velbuslib.VMBRequestTemp(v.address, v.part)
+                .then((msg) => console.log("CRON ", msg))
+                .catch((msg) => console.error(msg))
+            }
+        })
+    }
 })
+// WIP                                                              
 
 let every5min = schedule.scheduleJob('*/5 * * * *', () => {
     // call every 5 minutes event like temperatures

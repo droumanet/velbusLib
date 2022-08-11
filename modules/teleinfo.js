@@ -1,6 +1,6 @@
 // Require node js dgram module.
 import Dgram from "dgram"
-import VMBmodule from './velbuslib_class.mjs'
+import {VMBmodule, VMBsubmodule} from '../models/velbuslib_class.mjs'
 // const Dgram = require('dgram')
 let port = 65432
 // Create a udp socket client object.
@@ -40,10 +40,10 @@ let compteurProd = {
 
 function resume() {
     let statusConso = {"power":compteurConso.SINSTS*1, "index":compteurConso.EASF01/1000, "powermax":compteurConso.SMAXSN, "timestamp":Date.now()}
-    let cptConso = new VMBmodule("CPT", 1, "CPT-1", "Energy", statusConso)
+    let cptConso = new VMBsubmodule(300, 1, "300-1", "Energy", statusConso)
     cptConso.name = "TeleInfo Conso"
     let statusProd = {"power":compteurProd.SINSTI*1, "index":compteurProd.EASF01/1000, "powermax":compteurProd.SMAXIN, "timestamp":Date.now()}
-    let cptProd = new VMBmodule("CPT", 1, "CPT-1", "Energy", statusProd)
+    let cptProd = new VMBsubmodule(300, 2, "300-2", "Energy", statusProd)
     cptProd.name = "TeleInfo Prod"
     return [cptConso, cptProd]
 }
