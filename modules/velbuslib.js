@@ -136,11 +136,51 @@ function resume() {
 	return moduleList;
 }
 
+function checkName(element) {
+	console.log("-------------- NAME "+element[4].toString(16)+" ------------------")
+	let key = element[2]+"-"+Bin2Part(element[5])
+	let fctVelbus = element[4]
+	let myModule = VMBNameStatus.get(key)
+	console.log("🔁 VMBNameStatus.get("+key+")=",myModule)
+	let max=6
+	if (myModule == undefined) {
+		VMBNameStatus.set(key, {"address":element[2],"name":"", "n1":"", "n2":"", "n3":"", "flag":0})
+		myModule = VMBNameStatus.get(key)
+	}
+	if (fctVelbus == 0xF2) max=4
+
+	let n=new Array()
+	let idx = fctVelbus-0xF0
+	let flag = 2**idx
+	let f = myModule.flag
+
+	n[0]=myModule.n1
+	n[1]=myModule.n2
+	n[2]=myModule.n3
+	n[idx]=""
+	
+	// console.log("🔁 NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
+	for (let t=0; t<max; t++) {
+		if (element[6+t] != 0xFF) {
+			n[idx]=n[idx]+String.fromCharCode(element[6+t])
+		}
+	}
+
+	// in case name is complete (flag = 100 | 010 | 001)
+	if ((f|flag) == 0b111) {
+		let m = moduleList.get(key)
+		if (m != undefined) {
+			m.name = n[0]+n[1]+n[2]
+			moduleList.set(key, m)
+			console.log("submodule "+key+" is named "+m.name)
+		}
+	}
+	VMBNameStatus.set(key, {"address":element[2],"name":n[0]+n[1]+n[2], "n1":n[0], "n2":n[1], "n3":n[2], "flag":flag|f})
+}
 
 // debug function
 function analyze2Texte(element) {
 	let fctVelbus = Number(element[4])
-	let lenVelbus = element[3] & 0x0F
 	let adrVelbus = element[2]
 	let texte = "@:"+adrVelbus.toString(16) + " Fct:" + fctVelbus.toString(16).toUpperCase() + "("+VMB.getFunctionName(fctVelbus)+") ► "
 	let buttonOn = ""
@@ -176,44 +216,9 @@ function analyze2Texte(element) {
 		case 0xF0:
 		case 0xF1:
 		case 0xF2:
-			console.log("-------------- NAME "+element[4].toString(16)+" ------------------")
+			checkName(element)
 			let key = adrVelbus+"-"+Bin2Part(element[5])
-			let myModule = VMBNameStatus.get(key)
-			console.log("🔁 VMBNameStatus.get("+key+")=",myModule)
-			let max=6
-			if (myModule == undefined) {
-				VMBNameStatus.set(key, {"address":element[2],"name":"", "n1":"", "n2":"", "n3":"", "flag":0})
-				myModule = VMBNameStatus.get(key)
-			}
-			if (fctVelbus == 0xF2) max=4
-
-			let n=new Array()
-			let idx = fctVelbus-0xF0
-			let flag = 2**idx
-			let f = myModule.flag
-	
-			n[0]=myModule.n1
-			n[1]=myModule.n2
-			n[2]=myModule.n3
-			n[idx]=""
-			
-			console.log("🔁 NAME", key, element[5], "Idx:", idx, "["+n[0]+"]["+n[1]+"]["+n[2]+"]")
-			for (let t=0; t<max; t++) {
-				if (element[6+t] != 0xFF) {
-					n[idx]=n[idx]+String.fromCharCode(element[6+t])
-				}
-			}
-
-			// in case name is complete (flag = 100 | 010 | 001)
-			if ((f|flag) == 0b111) {
-				let m = moduleList.get(key)
-				if (m != undefined) {
-					m.name = n[0]+n[1]+n[2]
-					moduleList.set(key, m)
-				}
-			}
-			VMBNameStatus.set(key, {"address":element[2],"name":n[0]+n[1]+n[2], "n1":n[0], "n2":n[1], "n3":n[2], "flag":flag|f})
-			texte += " Transmit it name '"+n[0]+n[1]+n[2]+"'"
+			texte += " Transmit it name '"+VMBNameStatus.get(key).name+"'"
 			break
 		case 0xFB:
 			buttonOn = toButtons(element[7], 4);
@@ -222,6 +227,7 @@ function analyze2Texte(element) {
 		case 0xFF: // Module Type Transmit
 			let moduleType = element[5]
 			console.log(adrVelbus,"Detected module type ", moduleType)
+			// WIP checkList(Address, )
 			break
 		default:
 			break

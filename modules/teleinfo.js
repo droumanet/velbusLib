@@ -73,7 +73,7 @@ TeleInfo.on('message', (message) => {
     if (maVariable.TYPE =="CONSOMMATION") {
         console.log("------------------------------------------")
         compteurConso = structuredClone(maVariable)
-        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodeSMAXNpower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN));     // DEBUG obj.Nom-1 ne peut pas être analysé
+        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodeSMAXNpower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodeSMAXNpower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
     } else {
         try {
         console.log(maVariable.TYPE+" : ", maVariable.SINSTI*1, "Pmax : ", decodeSMAXNpower(maVariable.SMAXIN),"W" , decodeDate(maVariable.SMAXIN))
