@@ -504,7 +504,8 @@ VelbusConnexion.on('connect', () => {
 
 VelbusConnexion.once('connect', () => {
 	setTimeout(() => {
-		VMBscanAll()
+		// VMBscanAll()
+		console.log("⚠️⚠️⚠️ Normally : VMBScanAll() ⚠️⚠️⚠️")
 	}, 1000)
 })
 

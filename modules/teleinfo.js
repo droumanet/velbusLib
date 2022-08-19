@@ -39,10 +39,10 @@ let compteurProd = {
 }
 
 function resume() {
-    let statusConso = {"power":compteurConso.SINSTS*1, "index":compteurConso.EASF01/1000, "powermax":compteurConso.SMAXSN, "timestamp":Date.now()}
+    let statusConso = {"power":compteurConso.SINSTS*1, "indexHP":compteurConso.EASF01*1, "indexHC":compteurConso.EASF02*1, "powermax":compteurConso.SMAXSN, "timestamp":Date.now()}
     let cptConso = new VMBsubmodule(300, 1, "300-1", "Energy", statusConso)
     cptConso.name = "TeleInfo Conso"
-    let statusProd = {"power":compteurProd.SINSTI*1, "index":compteurProd.EASF01/1000, "powermax":compteurProd.SMAXIN, "timestamp":Date.now()}
+    let statusProd = {"power":compteurProd.SINSTI*1, "indexProd":compteurProd.EAIT*1, "indexConso":compteurProd.EASF01*1, "powermax":compteurProd.SMAXIN, "timestamp":Date.now()}
     let cptProd = new VMBsubmodule(300, 2, "300-2", "Energy", statusProd)
     cptProd.name = "TeleInfo Prod"
     return [cptConso, cptProd]
@@ -59,7 +59,7 @@ function decodeDate(m) {
 
 }
 // decode TeleInfo max power :"DATE POWER"
-function decodeSMAXNpower(m) {
+function decodePower(m) {
     let msg = m.split(" ")
     return msg[1]*1
 }
@@ -68,15 +68,16 @@ function decodeSMAXNpower(m) {
 TeleInfo.on('listening', () => {
     console.log("Listening from TeleInfo UDP services")
 })
+// example on how to use it
 TeleInfo.on('message', (message) => {
     let maVariable = JSON.parse(message.toString())
     if (maVariable.TYPE =="CONSOMMATION") {
         console.log("------------------------------------------")
         compteurConso = structuredClone(maVariable)
-        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodeSMAXNpower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodeSMAXNpower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
+        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
     } else {
         try {
-        console.log(maVariable.TYPE+" : ", maVariable.SINSTI*1, "Pmax : ", decodeSMAXNpower(maVariable.SMAXIN),"W" , decodeDate(maVariable.SMAXIN))
+        console.log(maVariable.TYPE+" : ", maVariable.SINSTI*1, "Pmax : ", decodePower(maVariable.SMAXIN),"W" , decodeDate(maVariable.SMAXIN))
         compteurProd = structuredClone(maVariable)
         } catch {
             console.log(compteurProd.TYPE, maVariable)
@@ -90,4 +91,4 @@ TeleInfo.on('error', (message, info) => {
 
 TeleInfo.bind(port)
 
-export {compteurConso, compteurProd, resume}
+export {compteurConso, compteurProd, resume, decodeDate, decodePower}

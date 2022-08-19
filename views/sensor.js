@@ -17,15 +17,23 @@ socket.on('resume', (data) => {
       d = new Date(v.status.timestamp)
       horaire = d.toLocaleString()
       if ((dnow-d)/1000 > 1*70) { classTime="smallRed" } else {classTime="small"}
-      if (v.fct.toLowerCase()=="energy") {
-        vMain = v.status.power+" w"
-        vSecond=v.status.index+" wh"
-        symbol = "☢️"
-      } else if (v.fct.toLowerCase()=="temp") {
-        vMain = v.status.current+"°C"
-        vSecond='min:'+v.status.min+" / max:"+v.status.max
-        symbol = "🌡️"
-      }
+      
+        if (v.fct.toLowerCase()=="energy") {
+          if (v.address < 300) {
+            vMain = v.status.power+" w"
+            vSecond=v.status.index+" wh"
+          } else {
+            vMain = v.status.power+" w"
+            if (v.part == 1) vSecond=v.status.indexHP+" Kwh"+"<br>"+v.status.indexHC+" Kwh"
+            if (v.part == 2) vSecond=v.status.indexProd+" Kwh"+"<br>"+v.status.indexConso+" Kwh"
+          }
+          symbol = "☢️"
+        } else if (v.fct.toLowerCase()=="temp") {
+          vMain = v.status.current+"°C"
+          vSecond='min:'+v.status.min+" / max:"+v.status.max
+          symbol = "🌡️"
+        }
+
       HTML += 
       ` <div class="col-sm-3">
         <a href="/sensor/${v.id}" class="nolink">

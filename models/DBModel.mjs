@@ -1,4 +1,4 @@
-import * as db from '../Database.mjs'
+import {db} from '../Database.mjs'
 
 function getPower(callback){
     let sql='SELECT * FROM pwrDay';
@@ -13,7 +13,7 @@ function getPower(callback){
  * 
  */
 async function setPowerDay(values){
-    let sql='INSERT INTO pwrDay (powerconsohp,powerconsohc, pwrprod, pwrprodmax) VALUES ?';
+    let sql='INSERT INTO pwrDay (jour, pwrconsohp,pwrconsohc, pwrprod, pwrconsomax, pwrprodmax) VALUES (?)';
 
     /* DEBUG example for many insert in one time
     let values = [
@@ -26,6 +26,20 @@ async function setPowerDay(values){
         return data.affectedRows;
     });
    
+}
+
+async function getPowerDay(dateIN, dateOUT) {
+    let sql =
+    `SELECT 	jour,
+    pwrconsohp - LAG(pwrconsohp) OVER (ORDER BY jour) AS ecartHP,
+    pwrconsohc - LAG(pwrconsohc) OVER (ORDER BY jour) AS ecartHC,
+    pwrprod - LAG(pwrprod) OVER (ORDER BY jour) AS ecartProd
+    FROM pwrDay
+    WHERE jour BETWEEN '${dateIN}' AND '${dateOUT}';`
+    await db.query(sql, function (err, data) {
+        if (err) throw err;
+        return data
+    })
 }
 /*
 // Original example

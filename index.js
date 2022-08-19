@@ -19,6 +19,8 @@ import VMBserver from './config/VMBServer.json' assert {type:"json"}    // confi
 import * as velbuslib  from "./modules/velbuslib.js"
 import {VMBmodule, VMBsubmodule} from './models/velbuslib_class.mjs'
 import { getSunrise, getSunset } from 'sunrise-sunset-js'
+import { writePowerByDay } from './controllers/CtrlDatabase.mjs';
+
 
 import * as TeleInfo from './modules/teleinfo.js'
 
@@ -68,6 +70,7 @@ myio.on('connection', (socket) => {
     let modulesTeleInfo = TeleInfo.resume()
     moduleList.set("300-1", modulesTeleInfo[0])
     moduleList.set("300-2",modulesTeleInfo[1])
+    console.log("ModuleList(300-1)",moduleList.get("300-1")) // DEBUG DEBUG DEBUG DEBUG
     let json = JSON.stringify(Object.fromEntries(moduleList))
     myio.emit("resume", json)
     console.log("▶️ Nombre de modules récupérés : ",moduleList.size)
@@ -106,6 +109,7 @@ myhttp.listen(portWeb, () => {
 
 myio.listen(myhttp)
 
+var pad = function(num) { return ('00'+num).slice(-2) }
 
 // MAIN CODE END ==================================================================================
 // Timer part (see https://crontab.guru)
@@ -121,43 +125,65 @@ let everyDay5h = schedule.scheduleJob('* * 5 */1 * *', () => {
     
 })
 
-let everyDay23h59 = schedule.scheduleJob('50 59 23 */1 * * *', () => {
+let everyDay23h59 = schedule.scheduleJob('50 59 23 */1 * *', () => {
     // Record index and some jobs to clear old values
     // read values lists and send to SQL
-    console.log("CRON for Time synchronisation done...")
+    let tableCompteur = TeleInfo.resume()
+    
+    moduleList.set("300-1", tableCompteur[0])
+    moduleList.set("300-2", tableCompteur[1])
+
+    if (moduleList.get('300-1') != undefined) {
+        let date = new Date();
+        date = date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate()) 
+        let powerTbl = new Array()
+        powerTbl.push(date)
+        powerTbl.push(moduleList.get('300-1').status.indexHP+"")
+        powerTbl.push(moduleList.get('300-1').status.indexHC+"")
+        powerTbl.push(moduleList.get('300-2').status.indexProd+"")
+        powerTbl.push(TeleInfo.decodePower(moduleList.get('300-1').status.powermax)+"")
+        powerTbl.push(TeleInfo.decodePower(moduleList.get('300-2').status.powermax)+"")
+        console.log(powerTbl)
+        writePowerByDay(powerTbl)
+        // DEBUG write is ok but need to add some error's control (like writing twice ?)
+        console.log("CRON for sending power to DATABASE done...")
+    }
+
     
 })
 
-let everyHour = schedule.scheduleJob('* */1 * * * * *', () => {
+let everyHour = schedule.scheduleJob('* */2 * * * *', () => {
     // call every minute energy counter
     // DEBUG call every 10 secondes for debuging
 
     let d = new Date()
-    console.log(d.toISOString(), "Launch CRON scripts")
+    console.log(d.toISOString(), "Launch Hourly CRON scripts")
 
     // WIP Write results in a database (or/and a Global variables ?)
     // Scan all module and search for a function
     console.log("CRON ============================")
+    /*
     if (moduleList.size > 0) {
         console.log("THERE ARE SOME MODULES")
         moduleList.forEach((v, k) => {
             console.log(v.id, v.fct, v.status.power)
             if (v.fct.find(e => e.toLowerCase() == "energy")) {
                 velbuslib.VMBRequestEnergy(v.address, v.part)
-                .then((msg) => console.log("CRON ", msg))
+                .then((msg) => console.log("CRON energy", msg))
                 .catch((msg) => console.error(msg))
             }
 
             if (v.fct.find(e => e.toLowerCase() == "temp")) {
                 velbuslib.VMBRequestTemp(v.address, v.part)
-                .then((msg) => console.log("CRON ", msg))
+                .then((msg) => console.log("CRON temperature", msg))
                 .catch((msg) => console.error(msg))
             }
         })
     }
+    */
 })
 // WIP                                                              
 
-let every5min = schedule.scheduleJob('*/5 * * * *', () => {
+let every5min = schedule.scheduleJob('* */5 * * * *', () => {
     // call every 5 minutes event like temperatures
 })
