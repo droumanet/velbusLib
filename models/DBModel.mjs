@@ -1,4 +1,17 @@
-import {db} from '../Database.mjs'
+/*--------------------------------------------------------------------------
+  Initialisation for database connexion.
+  Change here for connexion settings.
+  --------------------------------------------------------------------------
+*/
+
+import mysql from 'mysql2/promise.js'
+
+let db = await mysql.createConnection({
+    host: '192.168.168.248',        // Replace with your host name
+    user: 'velbus',                 // Replace with your database username
+    password: 'citr0n',             // Replace with your database password
+    database: 'velbus'              // Replace with your database Name
+})
 
 function getPower(callback){
     let sql='SELECT * FROM pwrDay';
@@ -12,23 +25,20 @@ function getPower(callback){
 /**
  * 
  */
-async function setPowerDay(values){
+async function setPowerDay(values) {
     let sql='INSERT INTO pwrDay (jour, pwrconsohp,pwrconsohc, pwrprod, pwrconsomax, pwrprodmax) VALUES (?)';
-
-    /* DEBUG example for many insert in one time
-    let values = [
-        ['value1', 'value2'],
-        ['value1', 'value2']
-    ]
-    */
     await db.query(sql, [values], function (err, data) {
         if (err) throw err;
         return data.affectedRows;
-    });
-   
+    })
 }
 
 async function getPowerDay(dateIN, dateOUT) {
+    // DEBUG for testing
+    if (dateIN == undefined || dateOUT == undefined) {
+        dateIN="2022-08-20"
+        dateOUT="2022-12-31"
+    }
     let sql =
     `SELECT 	jour,
     pwrconsohp - LAG(pwrconsohp) OVER (ORDER BY jour) AS ecartHP,
@@ -36,11 +46,9 @@ async function getPowerDay(dateIN, dateOUT) {
     pwrprod - LAG(pwrprod) OVER (ORDER BY jour) AS ecartProd
     FROM pwrDay
     WHERE jour BETWEEN '${dateIN}' AND '${dateOUT}';`
-    await db.query(sql, function (err, data) {
-        if (err) throw err;
-        return data
-    })
+    return await db.query(sql)
 }
+
 /*
 // Original example
 addFlower:function(flowerDetails,callback){
@@ -52,4 +60,4 @@ addFlower:function(flowerDetails,callback){
 },
 */
 
-export {getPower, setPowerDay}
+export {getPower, setPowerDay, getPowerDay}

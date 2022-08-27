@@ -1,0 +1,49 @@
+<%- include ('./header') -%>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<h1>Statistiques</h1>
+<h2>TeleInfo</h2>
+
+<canvas id="power-chart" width="800" height="450"></canvas>
+
+<script>
+    let toto = <%- JSON.stringify(dataProd) %>
+    console.log(toto)
+    new Chart(document.getElementById("power-chart"), {
+        type: 'bar',
+        data: {
+            labels: <%- JSON.stringify(dataJour) %>,
+            datasets: [{ 
+                data: <%- JSON.stringify(dataHP) %>,
+                label: "Conso HP",
+                backgroundColor: "#3e95cd",
+                stack: "stack0"
+            }, { 
+                data: <%- JSON.stringify(dataHC) %>,
+                label: "Conso HC",
+                backgroundColor: "#8e5ea2",
+                stack: "stack0"
+            }, { 
+                data: <%- JSON.stringify(dataProd) %>,
+                label: "Production",
+                backgroundColor: "#3cba9f",
+                stack: "stack1"
+            }]
+        },
+        option: {
+            scales: {
+                x: {
+                    stacked: true,
+                },
+                y: {
+                    stacked: true
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    })
+</script>
+
+
+<%- include ('./footer') -%>

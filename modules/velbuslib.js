@@ -3,6 +3,7 @@
  * @description VELBUS Library to use with Velbus NodeJS projects
  * @version 1.0
  * @license CommonCreative BY.
+ * information from https://github.com/velbus/moduleprotocol
  */
 
 // [ ] Etat Relais

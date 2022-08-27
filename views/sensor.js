@@ -24,8 +24,8 @@ socket.on('resume', (data) => {
             vSecond=v.status.index+" wh"
           } else {
             vMain = v.status.power+" w"
-            if (v.part == 1) vSecond=v.status.indexHP+" Kwh"+"<br>"+v.status.indexHC+" Kwh"
-            if (v.part == 2) vSecond=v.status.indexProd+" Kwh"+"<br>"+v.status.indexConso+" Kwh"
+            if (v.part == 1) vSecond=v.status.indexHP/1000+" Kwh"+"<br>"+v.status.indexHC/1000+" Kwh"
+            if (v.part == 2) vSecond=v.status.indexProd/1000+" Kwh"+"<br>"+v.status.indexConso/1000+" Kwh"
           }
           symbol = "☢️"
         } else if (v.fct.toLowerCase()=="temp") {
