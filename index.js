@@ -55,7 +55,7 @@ let myio = new Server(myhttp, {
 });
 
 velbuslib.VelbusStart(VMBserver.host, VMBserver.port)
-let moduleList = new Map()
+let subModuleList = new Map()
 
 
 // ==========================================================================================================
@@ -66,14 +66,14 @@ let moduleList = new Map()
 
 myio.on('connection', (socket) => {
     console.log(`▶️ SocketIO (re)connected to @IP:${socket.request.remoteAddress} (client ${socket.id})`)
-    moduleList = velbuslib.resume()
+    subModuleList = velbuslib.resume()
     let modulesTeleInfo = TeleInfo.resume()
-    moduleList.set("300-1", modulesTeleInfo[0])
-    moduleList.set("300-2",modulesTeleInfo[1])
-    console.log("ModuleList(300-1)",moduleList.get("300-1")) // DEBUG DEBUG DEBUG DEBUG
-    let json = JSON.stringify(Object.fromEntries(moduleList))
+    subModuleList.set("300-1", modulesTeleInfo[0])
+    subModuleList.set("300-2",modulesTeleInfo[1])
+    console.log("ModuleList(300-1)",subModuleList.get("300-1")) // DEBUG DEBUG DEBUG DEBUG
+    let json = JSON.stringify(Object.fromEntries(subModuleList))
     myio.emit("resume", json)
-    console.log("▶️ Nombre de modules récupérés : ",moduleList.size)
+    console.log("▶️ Nombre de modules récupérés : ",subModuleList.size)
     socket.on("energy", (msg) => {
         console.log("► Energy request transmitted (socketIO client)")
         velbuslib.VMBWrite(velbuslib.CounterRequest(msg.address, msg.part))
@@ -130,19 +130,19 @@ let everyDay23h59 = schedule.scheduleJob('50 59 23 */1 * *', () => {
     // read values lists and send to SQL
     let tableCompteur = TeleInfo.resume()
     
-    moduleList.set("300-1", tableCompteur[0])
-    moduleList.set("300-2", tableCompteur[1])
+    subModuleList.set("300-1", tableCompteur[0])
+    subModuleList.set("300-2", tableCompteur[1])
 
-    if (moduleList.get('300-1') != undefined) {
+    if (subModuleList.get('300-1') != undefined) {
         let date = new Date();
         date = date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate()) 
         let powerTbl = new Array()
         powerTbl.push(date)
-        powerTbl.push(moduleList.get('300-1').status.indexHP+"")
-        powerTbl.push(moduleList.get('300-1').status.indexHC+"")
-        powerTbl.push(moduleList.get('300-2').status.indexProd+"")
-        powerTbl.push(TeleInfo.decodePower(moduleList.get('300-1').status.powermax)+"")
-        powerTbl.push(TeleInfo.decodePower(moduleList.get('300-2').status.powermax)+"")
+        powerTbl.push(subModuleList.get('300-1').status.indexHP+"")
+        powerTbl.push(subModuleList.get('300-1').status.indexHC+"")
+        powerTbl.push(subModuleList.get('300-2').status.indexProd+"")
+        powerTbl.push(TeleInfo.decodePower(subModuleList.get('300-1').status.powermax)+"")
+        powerTbl.push(TeleInfo.decodePower(subModuleList.get('300-2').status.powermax)+"")
         console.log(powerTbl)
         writePowerByDay(powerTbl)
         // DEBUG write is ok but need to add some error's control (like writing twice ?)
@@ -152,9 +152,8 @@ let everyDay23h59 = schedule.scheduleJob('50 59 23 */1 * *', () => {
     
 })
 
-let everyHour = schedule.scheduleJob('* */2 * * * *', () => {
+let everyHour = schedule.scheduleJob('*/1 * * * *', () => {
     // call every minute energy counter
-    // DEBUG call every 10 secondes for debuging
 
     let d = new Date()
     console.log(d.toISOString(), "Launch Hourly CRON scripts")
