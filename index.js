@@ -39,8 +39,6 @@ app.use(cors({
    optionsSuccessStatus: 200
 }));
 
-// FIXME CDN ok, npm isn't. install @mdi/font doesn't works with following line
-// tried with ./node_modules/... , node_modules/, /node_modules
 app.use('/css', express.static(path.join(__dirname, 'node_modules/@mdi/font/css')))
 console.error("CSS via NPM : ",path.join(__dirname, 'node_modules/@mdi/font/css'))
 
@@ -70,7 +68,7 @@ myio.on('connection', (socket) => {
     let modulesTeleInfo = TeleInfo.resume()
     subModuleList.set("300-1", modulesTeleInfo[0])
     subModuleList.set("300-2",modulesTeleInfo[1])
-    console.log("ModuleList(300-1)",subModuleList.get("300-1")) // DEBUG DEBUG DEBUG DEBUG
+
     let json = JSON.stringify(Object.fromEntries(subModuleList))
     myio.emit("resume", json)
     console.log("▶️ Nombre de modules récupérés : ",subModuleList.size)

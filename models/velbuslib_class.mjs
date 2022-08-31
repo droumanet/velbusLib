@@ -8,8 +8,8 @@
 	type = 0		// exact type module
 	fct=""			// function like 'temp', 'energy', 'relay', 'lamp', 'dimmer', blind', 'motor'...
 	status = {}		// object containing the specific status
-	group = []		// could be multiple : room, floor, orientation (west, north...) or some useful tags
-	power = 0		// consumption in mA
+	room = ""
+	zone = []		// could be multiple : room, floor, orientation (west, north...) or some useful tags
 
 	constructor(address, part, key, fct, status) {
 		this.address = address
@@ -22,8 +22,9 @@
 
 class VMBmodule {
 	address = 0
-	type = 0
+	modType = 0
 	partNumber = 0
+	powerConsumption = 0		// consumption in mA
 	description = ""
 	location = ""
 	buildWeek = 0
@@ -34,7 +35,7 @@ class VMBmodule {
 
 	constructor(address, type) {
 		this.address = address
-		this.type = type
+		this.modType = type
 
 
 	}

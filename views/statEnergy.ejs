@@ -4,10 +4,14 @@
 <h1>Statistiques</h1>
 <h2>TeleInfo</h2>
 
-<canvas id="power-chart" width="800" height="450"></canvas>
+<div style="height: 600px; width: 1000px;">
+    <canvas id="power-chart"></canvas>
+</div>
 
 <script>
-    new Chart(document.getElementById("power-chart"), {
+    let context = document.getElementById("power-chart").getContext('2d')
+
+    new Chart(context, {
         type: 'bar',
         data: {
             labels: <%- JSON.stringify(dataJour) %>,
@@ -38,7 +42,7 @@
                 }
             },
             responsive: true,
-            maintainAspectRatio: true
+            maintainAspectRatio: false
         }
     })
 </script>
