@@ -24,6 +24,7 @@ function formatDate(milliseconds) {
 
 async function view(req, res) {
     let data = await myModel.getPowerDay(undefined, undefined)
+    console.log("Données retour getPowerDay() :", data)
     let dataJour=[], dataHP=[], dataHC=[], dataProd=[]
     console.log(data[0])
     data[0].forEach((pwrObj) => {

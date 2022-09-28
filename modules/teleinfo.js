@@ -73,12 +73,16 @@ TeleInfo.on('message', (message) => {
     let maVariable = JSON.parse(message.toString())
     if (maVariable.TYPE =="CONSOMMATION") {
         console.log("------------------------------------------")
-        compteurConso = structuredClone(maVariable)
-        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
+        if (compteurConso!= undefined && maVariable.EASF01 > compteurConso.EASF01) {
+            compteurConso = structuredClone(maVariable)
+            console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
+        }
     } else {
         try {
-        console.log(maVariable.TYPE+" : ", maVariable.SINSTI*1, "Pmax : ", decodePower(maVariable.SMAXIN),"W" , decodeDate(maVariable.SMAXIN))
-        compteurProd = structuredClone(maVariable)
+            if (compteurProd!= undefined && maVariable.EAIT > compteurProd.EAIT) {
+                console.log(maVariable.TYPE+" : ", maVariable.SINSTI*1, "Pmax : ", decodePower(maVariable.SMAXIN),"W" , decodeDate(maVariable.SMAXIN))
+                compteurProd = structuredClone(maVariable)
+            }
         } catch {
             console.log(compteurProd.TYPE, maVariable)
         }

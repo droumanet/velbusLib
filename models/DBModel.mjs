@@ -5,20 +5,33 @@
 */
 
 import mysql from 'mysql2/promise.js'
+// import Pool from 'mysql2/typings/mysql/lib/Pool.js';
+let db
 
-let db = await mysql.createConnection({
-    host: '192.168.168.248',        // Replace with your host name
-    user: 'velbus',                 // Replace with your database username
-    password: 'citr0n',             // Replace with your database password
-    database: 'velbus'              // Replace with your database Name
-})
+async function connectDB(){
+    
+    const connection = await mysql.createPool({
+        host: '192.168.168.248',        // Replace with your host name
+        user: 'velbus',                 // Replace with your database username
+        password: 'citr0n',             // Replace with your database password
+        database: 'velbus',             // Replace with your database Name
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+    });
+    console.log("Connected to remote database");
+    return connection;
+}
 
-function getPower(callback){
+async function getPower(callback){
+
     let sql='SELECT * FROM pwrDay';
     db.query(sql, function (err, data, fields) {
         if (err) throw err;
-        return callback(data);
-    });
+        return callback(data)
+    })
+
+    
 }
 
 // WIP sample for power
@@ -27,7 +40,7 @@ function getPower(callback){
  */
 async function setPowerDay(values) {
     let sql='INSERT INTO pwrDay (jour, pwrconsohp,pwrconsohc, pwrprod, pwrconsomax, pwrprodmax) VALUES (?)';
-    await db.query(sql, [values], function (err, data) {
+    db.query(sql, [values], function (err, data) {
         if (err) throw err;
         return data.affectedRows;
     })
@@ -46,7 +59,7 @@ async function getPowerDay(dateIN, dateOUT) {
     pwrprod - LAG(pwrprod) OVER (ORDER BY jour) AS ecartProd
     FROM pwrDay
     WHERE jour BETWEEN '${dateIN}' AND '${dateOUT}';`
-    return await db.query(sql)
+    return db.query(sql)
 }
 
 /*
@@ -59,5 +72,9 @@ addFlower:function(flowerDetails,callback){
     });
 },
 */
+
+// launch initial connexion
+db = await connectDB()
+console.log("db ==>", db)
 
 export {getPower, setPowerDay, getPowerDay}
