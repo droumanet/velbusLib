@@ -14,7 +14,7 @@ let compteurConso = {
     "EASF02": "",
     "IRMS1": "",
     "URMS1": "",
-    "SINSTS": "",
+    "SINSTS": "",  // current power consummed
     "UMOY1": "",
     "NGTF": "",
     "NTARF": "",
@@ -31,7 +31,7 @@ let compteurProd = {
     "EAIT": "",
     "IRMS1": "",
     "URMS1": "",
-    "SINSTI": "",
+    "SINSTI": "",  // current power injected
     "SMAXIN": "",
     "SMAXIN1": "",
     "NGTF": "",
@@ -75,14 +75,17 @@ TeleInfo.on('message', (message) => {
         console.log("------------------------------------------")
         if (compteurConso!= undefined && maVariable.EASF01 > compteurConso.EASF01) {
             compteurConso = structuredClone(maVariable)
-            console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
         }
+        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
     } else {
         try {
+            // Keep best index value but show current Power
             if (compteurProd!= undefined && maVariable.EAIT > compteurProd.EAIT) {
-                console.log(maVariable.TYPE+" : ", maVariable.SINSTI*1, "Pmax : ", decodePower(maVariable.SMAXIN),"W" , decodeDate(maVariable.SMAXIN))
                 compteurProd = structuredClone(maVariable)
+            } else {
+                compteurProd.SINSTI = maVariable.SINSTI
             }
+            console.log(compteurProd.TYPE+" : ", compteurProd.SINSTI*1, "Pmax : ", decodePower(compteurProd.SMAXIN),"W" , decodeDate(compteurProd.SMAXIN))
         } catch {
             console.log(compteurProd.TYPE, maVariable)
         }

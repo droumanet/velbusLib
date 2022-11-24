@@ -49,8 +49,14 @@ async function setPowerDay(values) {
 async function getPowerDay(dateIN, dateOUT) {
     // DEBUG for testing
     if (dateIN == undefined || dateOUT == undefined) {
-        dateIN="2022-08-20"
-        dateOUT="2022-12-31"
+        let dateToday = new Date()
+        let dateBefore = new Date()
+        let d = dateToday.getTime() - 1000*60*60*24*60; // Offset by one day;
+        dateBefore.setTime(d);
+        dateOUT=dateToday.getFullYear()+"-"+(dateToday.getMonth()+1)+"-"+dateToday.getDate()
+        dateIN=dateBefore.getFullYear()+"-"+(dateBefore.getMonth()+1)+"-"+dateBefore.getDate()
+        //dateIN="2022-08-20"
+        //dateOUT="2022-12-31"
     }
     let sql =
     `SELECT 	jour,
