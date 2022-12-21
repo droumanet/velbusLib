@@ -22,8 +22,8 @@ function formatDate(milliseconds) {
   return [year, month, day].join('-');
 }
 
-async function view(req, res) {
-    let data = await myModel.getPowerDay(undefined, undefined)
+async function viewGlobalEnergy(req, res) {
+    let data = await myModel.SQLgetPowerDay(undefined, undefined)
     console.log("Données retour getPowerDay() :", data)
     let dataJour=[], dataHP=[], dataHC=[], dataProd=[]
     console.log(data[0])
@@ -37,7 +37,26 @@ async function view(req, res) {
     dataHP.shift()
     dataHC.shift()
     dataProd.shift()
-    res.render('statEnergy', {statistiques: data[0], dataJour: dataJour, dataHP: dataHP, dataHC: dataHC, dataProd:dataProd})
+    res.render('statGlobalEnergy', {statistiques: data[0], dataJour: dataJour, dataHP: dataHP, dataHC: dataHC, dataProd:dataProd})
 }
 
-export {view}
+async function viewLocalEnergy(req, res) {
+  let addr = req.query.addr
+  let part = req.query.part
+  console.log("*********** ", addr, part)
+  if (addr == undefined) addr = 6
+  if (part == undefined) part = 3
+  let data = await myModel.SQLgetEnergyDay(undefined, undefined, addr, part)
+  // console.log("Données retour getPowerDay() :", data)
+  let dataDay=[], dataPowerDay=[]
+  console.log(data[0])
+  data[0].forEach((pwrObj) => {
+    dataDay.push(formatDate(pwrObj.dateRecord))
+    dataPowerDay.push(pwrObj.ConsoJour)
+  })
+  dataDay.shift()
+  dataPowerDay.shift()
+  res.render('statLocalEnergy', {"statistiques": data[0], "dataDay": dataDay, "dataPowerDay": dataPowerDay})
+}
+
+export {viewGlobalEnergy, viewLocalEnergy}

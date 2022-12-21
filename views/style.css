@@ -40,3 +40,18 @@ a.nolink {
     font-size: 0.7em;
     color:darkgoldenrod;
 }
+
+/* Toggle dark or Light theme 
+:root {
+    --darkBG: #232B32;
+  }
+  
+  body.inverted {
+    background-color: var(--darkBG);
+  }
+  
+.ui.card>.content,
+.ui.cards>.card>.content {
+  background-color: #1a1e22;
+}
+*/

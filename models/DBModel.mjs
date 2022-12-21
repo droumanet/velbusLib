@@ -36,9 +36,9 @@ async function getPower(callback){
 
 // WIP sample for power
 /**
- * 
+ * @param values Array of TeleInfo for production and cunsomption
  */
-async function setPowerDay(values) {
+async function SQLsetPowerDay(values) {
     let sql='INSERT INTO pwrDay (jour, pwrconsohp,pwrconsohc, pwrprod, pwrconsomax, pwrprodmax) VALUES (?)';
     db.query(sql, [values], function (err, data) {
         if (err) throw err;
@@ -46,12 +46,24 @@ async function setPowerDay(values) {
     })
 }
 
-async function getPowerDay(dateIN, dateOUT) {
+/**
+ * @param values Array of TeleInfo for production and cunsomption
+ */
+ async function SQLsetEnergy(values) {
+    let sql='REPLACE INTO Energie (ModAddr, ModPart, dateRecord, PowerIndex, PowerInst) VALUES (?)';
+    db.query(sql, [values], function (err, data) {
+        if (err) throw err;
+        return data.affectedRows;
+    })
+}
+
+async function SQLgetPowerDay(dateIN, dateOUT) {
     // DEBUG for testing
     if (dateIN == undefined || dateOUT == undefined) {
+        let dayOffset = 60
         let dateToday = new Date()
         let dateBefore = new Date()
-        let d = dateToday.getTime() - 1000*60*60*24*60; // Offset by one day;
+        let d = dateToday.getTime() - 1000*60*60*24*dayOffset; // Offset by 60 day;
         dateBefore.setTime(d);
         dateOUT=dateToday.getFullYear()+"-"+(dateToday.getMonth()+1)+"-"+dateToday.getDate()
         dateIN=dateBefore.getFullYear()+"-"+(dateBefore.getMonth()+1)+"-"+dateBefore.getDate()
@@ -65,6 +77,30 @@ async function getPowerDay(dateIN, dateOUT) {
     pwrprod - LAG(pwrprod) OVER (ORDER BY jour) AS ecartProd
     FROM pwrDay
     WHERE jour BETWEEN '${dateIN}' AND '${dateOUT}';`
+    return db.query(sql)
+}
+
+async function SQLgetEnergyDay(dateIN, dateOUT, addr, part) {
+    if (dateIN == undefined || dateOUT == undefined) {
+        let dayOffset = 60
+        let dateToday = new Date()
+        let dateBefore = new Date()
+        let d = dateToday.getTime() - 1000*60*60*24*dayOffset; // Offset by 60 day;
+        dateBefore.setTime(d);
+        dateOUT=dateToday.getFullYear()+"-"+(dateToday.getMonth()+1)+"-"+dateToday.getDate()
+        dateIN=dateBefore.getFullYear()+"-"+(dateBefore.getMonth()+1)+"-"+dateBefore.getDate()
+        //dateIN="2022-08-20"
+        //dateOUT="2022-12-31"
+    }
+    let sql =
+    `SELECT	dateRecord, 
+    PowerIndex - LAG(PowerIndex) OVER (ORDER BY dateRecord) AS ConsoJour
+    FROM Energie
+    WHERE ModAddr = ${addr}	-- Module 6-1 PAC, 6-2 Radiators, 6-3 ChargeCar
+    AND ModPart = ${part}	-- other 40-1 clim, 40-2 HousAutomation, 40-3 unused
+    AND dateRecord BETWEEN '${dateIN}' AND '${dateOUT}'
+    AND time(dateRecord) = "00:00:00"
+    ORDER BY dateRecord;`
     return db.query(sql)
 }
 
@@ -83,4 +119,4 @@ addFlower:function(flowerDetails,callback){
 db = await connectDB()
 console.log("db ==>", db)
 
-export {getPower, setPowerDay, getPowerDay}
+export {getPower, SQLsetPowerDay, SQLgetPowerDay, SQLgetEnergyDay, SQLsetEnergy}

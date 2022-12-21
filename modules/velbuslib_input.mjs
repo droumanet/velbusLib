@@ -4,6 +4,7 @@
 // ==================================================================================
 
 import * as VMB from './velbuslib_constant.js'
+import * as VMBgen from './velbuslib_generic.mjs'
 
 /**
  * Function to create frame for changing relay's state on a module
@@ -21,7 +22,7 @@ import * as VMB from './velbuslib_constant.js'
 	trame[4] = 0xBD;    // Counter Status Request
 	trame[5] = part;
 	trame[6] = 0;
-	trame[7] = VMB.CheckSum(trame, 0);
+	trame[7] = VMBgen.CheckSum(trame, 0);
 	trame[8] = VMB.EndX;
 	return trame;
 }

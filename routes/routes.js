@@ -26,7 +26,8 @@ let racine = (req, res) => {
 // routes list
 Router.get('/analyze', CtrlAnalyze.view)
 Router.get('/sensor', CtrlSensor.view)
-Router.get('/statEnergy', CtrlPower.view)
+Router.get('/statGlobalEnergy', CtrlPower.viewGlobalEnergy)
+Router.get('/statLocalEnergy', CtrlPower.viewLocalEnergy)
 Router.get('/installation', CtrlInstall.installation)
 Router.get('/', racine)
 Router.get('*', racine)

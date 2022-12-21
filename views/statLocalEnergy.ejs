@@ -2,34 +2,26 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <h1>Statistiques</h1>
-<h2>TeleInfo</h2>
+<h2>Compteurs instantanés</h2>
 
 <div style="height: 600px; width: 1000px;">
     <canvas id="power-chart"></canvas>
 </div>
 
+
 <script>
     let context = document.getElementById("power-chart").getContext('2d')
+    console.log("stats",<%- JSON.stringify(dataDay) %>, <%- JSON.stringify(dataPowerDay) %>);
 
     new Chart(context, {
         type: 'bar',
         data: {
-            labels: <%- JSON.stringify(dataJour) %>,
+            labels: <%- JSON.stringify(dataDay) %>,
             datasets: [{ 
-                data: <%- JSON.stringify(dataHP) %>,
-                label: "Conso HP",
+                data: <%- JSON.stringify(dataPowerDay) %>,
+                label: "Conso Journalière",
                 backgroundColor: "#3e95cd",
                 stack: "stack0"
-            }, { 
-                data: <%- JSON.stringify(dataHC) %>,
-                label: "Conso HC",
-                backgroundColor: "#8e5ea2",
-                stack: "stack0"
-            }, { 
-                data: <%- JSON.stringify(dataProd) %>,
-                label: "Production",
-                backgroundColor: "#3cba9f",
-                stack: "stack1"
             }]
         },
         option: {

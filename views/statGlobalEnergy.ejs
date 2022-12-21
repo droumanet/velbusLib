@@ -1,0 +1,52 @@
+<%- include ('./header') -%>
+
+
+<h1>Statistiques</h1>
+<h2>TeleInfo</h2>
+
+<div style="height: 600px; min-width: 90%; max-width: 95%;">
+    <canvas id="power-chart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let context = document.getElementById("power-chart").getContext('2d')
+
+    new Chart(context, {
+        type: 'bar',
+        data: {
+            labels: <%- JSON.stringify(dataJour) %>,
+            datasets: [{ 
+                data: <%- JSON.stringify(dataHP) %>,
+                label: "Conso HP",
+                backgroundColor: "#3e95cd",
+                stack: "stack0"
+            }, { 
+                data: <%- JSON.stringify(dataHC) %>,
+                label: "Conso HC",
+                backgroundColor: "#8e5ea2",
+                stack: "stack0"
+            }, { 
+                data: <%- JSON.stringify(dataProd) %>,
+                label: "Production",
+                backgroundColor: "#3cba9f",
+                stack: "stack1"
+            }]
+        },
+        option: {
+            scales: {
+                x: {
+                    stacked: true,
+                },
+                y: {
+                    stacked: true
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    })
+</script>
+
+
+<%- include ('./footer') -%>

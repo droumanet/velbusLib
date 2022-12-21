@@ -5,52 +5,59 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width">
   <script src="/socket.io/socket.io.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Halfmoon/1.1.1/css/halfmoon.min.css"
+    crossorigin="anonymous">
   <style>
-    @import url("https://cdn.jsdelivr.net/npm/minstyle.io@1.1.0/css/minstyle.io.css");
-    /*@import url("https://cdn.jsdelivr.net/npm/minstyle.io@2.0.1/dist/css/minstyle.io.min.css");*/
-    /*Doc : https://minstyle.io/docs/*/
-    /* @import url('/css/materialdesignicons.min.css'); ne fonctionne pas */
-    /* Evolution 2.0.1: @import url("https://cdn.jsdelivr.net/npm/minstyle.io@2.0.1/dist/css/minstyle.io.min.css"); */
     @import url("https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css");
     @import url("style.css");
   </style>
+
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dark-mode-switcher@0.0.1/dist/dark.min.js"></script>
+
   <title>Velbus client</title>
   <link rel="icon" href="House-32.ico" type="image/icon type">
 </head>
 
-<body>
-  <div class="ms-menu">
-    <div class="ms-menu-logo">
-      <a href="http://david.rouma.net">
-        <img src="Arvel.png" alt="logo Arvel" height="48" />
-      </a>
-    </div>
-    <nav class="ms-menu-link">
-      <input type="checkbox" id="ms-menu-toggle">
-      <label for="ms-menu-toggle" class="ms-menu-icon"><span class="mdi mdi-menu"></span></label>
-      <ul>
-        <a href="/">
-          <li><span class="mdi mdi-home-automation"></span> Accueil </li>
+<body data-set-preferred-mode-onload="true">
+  <div class="page-wrapper with-navbar"></div>
+  <nav class="navbar">
+
+    <a class="navbar-brand" href="http://david.rouma.net">
+      <img src="Arvel.png" alt="logo Arvel" />
+    </a>
+
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="/"><span class="mdi mdi-home-automation"></span>Accueil</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="/analyze"><span class="mdi mdi-glasses"></span>Scanner</a>
+      </li>
+
+      <li class="nav-item dropdown with-arrow">
+        <a class="nav-link" href="#" role="button" data-toggle="dropdown" id="nav-link-dropdown-toggle">
+          <span class="mdi mdi-chart-bar"></span>Statistiques
         </a>
-        <a href="/analyze">
-          <li><span class="mdi mdi-glasses"></span> Scanner </li>
-        </a>
-        <a href="/">
-          <li><span class="mdi mdi-lamps-outline"></span> Lampes </li>
-        </a>
-        <a href="/">
-          <li><span class="mdi mdi-window-closed"></span> Volets </li>
-        </a>
-        <a href="/sensor">
-          <li><span class="mdi mdi-thermometer"></span> Sondes </li>
-        </a>
-        <a href="/statEnergy">
-          <li><span class="mdi mdi-electron-framework"></span> Statistiques </li>
-        </a>
-        <a href="/installation">
-          <li><span class="mdi mdi-desktop-classic"></span> Installation </li>
-        </a>
-      </ul>
-    </nav>
-  </div>
+        <div class="dropdown-menu dropdown-menu-left" aria-labelledby="nav-link-dropdown-toggle">
+            <a class="dropdown-item" href="/statGlobalEnergy"><span class="mdi mdi-chart-bar"></span>TeleInfo</a>
+            <a class="dropdown-item" href="/statLocalEnergy?addr=6&part=1"><span class="mdi mdi-chart-bar"></span>Compteur PAC et Chauffe-eau</a>
+            <a class="dropdown-item" href="/statLocalEnergy?addr=6&part=3"><span class="mdi mdi-chart-bar"></span>Compteur Charge Voiture</a>
+            <a class="dropdown-item" href="#">Autres...</a>
+        </div>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link active" href="/sensor"><span class="mdi mdi-thermometer"></span>Sondes</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="/installation"><span class="mdi mdi-desktop-classic"></span>Installation </a>
+      </li>
+      <button class="btn btn-square" type="button" onclick="halfmoon.toggleDarkMode()">
+        <span class="mdi mdi-theme-light-dark"></span>
+        <span class="sr-only">Toggle dark mode</span> <!-- sr-only = only for screen readers -->
+      </button>
+    </ul>
+
+  </nav>
+ </div>
