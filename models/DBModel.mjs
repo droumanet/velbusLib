@@ -80,6 +80,14 @@ async function SQLgetPowerDay(dateIN, dateOUT) {
     return db.query(sql)
 }
 
+/**
+ * Get delta power from Energie Table (day by day)
+ * @param {*} dateIN 
+ * @param {*} dateOUT 
+ * @param {*} addr 
+ * @param {*} part 
+ * @returns SQL answer
+ */
 async function SQLgetEnergyDay(dateIN, dateOUT, addr, part) {
     if (dateIN == undefined || dateOUT == undefined) {
         let dayOffset = 60
@@ -99,7 +107,33 @@ async function SQLgetEnergyDay(dateIN, dateOUT, addr, part) {
     WHERE ModAddr = ${addr}	-- Module 6-1 PAC, 6-2 Radiators, 6-3 ChargeCar
     AND ModPart = ${part}	-- other 40-1 clim, 40-2 HousAutomation, 40-3 unused
     AND dateRecord BETWEEN '${dateIN}' AND '${dateOUT}'
-    AND time(dateRecord) = "00:00:00"
+    AND time(dateRecord) = "23:59:00"
+    ORDER BY dateRecord;`
+    return db.query(sql)
+}
+
+/**
+ * Get instant power from Energie Table (each minutes)
+ * @param {*} addr 
+ * @param {*} part 
+ * @returns SQL answer
+ */
+async function SQLgetEnergyInstant(addr, part) {
+
+    let dayOffset = 1
+    let dateToday = new Date()
+    let dateBefore = new Date()
+    let d = dateToday.getTime() - 1000*60*60*24*dayOffset; // Offset by 1 day;
+    dateBefore.setTime(d);
+    let dateOUT=dateToday.getFullYear()+"-"+(dateToday.getMonth()+1)+"-"+dateToday.getDate()
+    let dateIN=dateBefore.getFullYear()+"-"+(dateBefore.getMonth()+1)+"-"+dateBefore.getDate()
+
+    let sql =
+    `SELECT dateRecord, PowerInst, PowerIndex
+    FROM Energie
+    WHERE ModAddr = ${addr}
+    AND ModPart = ${part} -- 1: PAC, 3: ChargeCar
+    AND dateRecord BETWEEN '${dateIN}' AND '${dateOUT}'
     ORDER BY dateRecord;`
     return db.query(sql)
 }
@@ -119,4 +153,4 @@ addFlower:function(flowerDetails,callback){
 db = await connectDB()
 console.log("db ==>", db)
 
-export {getPower, SQLsetPowerDay, SQLgetPowerDay, SQLgetEnergyDay, SQLsetEnergy}
+export {getPower, SQLsetPowerDay, SQLgetPowerDay, SQLgetEnergyDay, SQLgetEnergyInstant, SQLsetEnergy}

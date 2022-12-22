@@ -59,4 +59,23 @@ async function viewLocalEnergy(req, res) {
   res.render('statLocalEnergy', {"statistiques": data[0], "dataDay": dataDay, "dataPowerDay": dataPowerDay})
 }
 
-export {viewGlobalEnergy, viewLocalEnergy}
+async function viewLocalEnergyInstant(req, res) {
+  let addr = req.query.addr
+  let part = req.query.part
+
+  if (addr == undefined) addr = 6
+  if (part == undefined) part = 3
+  let data = await myModel.SQLgetEnergyInstant(addr, part)
+  // console.log("Données retour getPowerDay() :", data)
+  let dataDay=[], dataPowerInst=[]
+  console.log(data[0])
+  data[0].forEach((pwrObj) => {
+    dataDay.push(formatDate(pwrObj.dateRecord))
+    dataPowerInst.push(pwrObj.PowerInst)
+  })
+  dataDay.shift()
+  dataPowerInst.shift()
+  res.render('statLocalEnergyInst', {"statistiques": data[0], "dataDay": dataDay, "dataPowerInst": dataPowerInst})
+}
+
+export {viewGlobalEnergy, viewLocalEnergy, viewLocalEnergyInstant}

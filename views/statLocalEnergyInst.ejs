@@ -2,7 +2,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <h1>Statistiques</h1>
-<h2>Compteurs journaliers</h2>
+<h2>Compteurs instantanés</h2>
 
 <div style="height: 600px; min-width: 90%; max-width: 95%;">
     <canvas id="power-chart"></canvas>
@@ -11,15 +11,17 @@
 
 <script>
     let context = document.getElementById("power-chart").getContext('2d')
-    console.log("stats",<%- JSON.stringify(dataDay) %>, <%- JSON.stringify(dataPowerDay) %>);
+    console.log("stats",<%- JSON.stringify(dataDay) %>, <%- JSON.stringify(dataPowerInst) %>);
 
     new Chart(context, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: <%- JSON.stringify(dataDay) %>,
             datasets: [{ 
-                data: <%- JSON.stringify(dataPowerDay) %>,
-                label: "Conso Journalière",
+                data: <%- JSON.stringify(dataPowerInst) %>,
+                fill: true,
+                pointStyle: false,
+                label: "Conso Instantanée",
                 backgroundColor: "#3e95cd",
                 stack: "stack0"
             }]

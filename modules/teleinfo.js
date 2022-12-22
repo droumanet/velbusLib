@@ -76,7 +76,7 @@ TeleInfo.on('message', (message) => {
         if (compteurConso!= undefined && maVariable.EASF01 > compteurConso.EASF01) {
             compteurConso = structuredClone(maVariable)
         }
-        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));     // DEBUG obj.Nom-1 ne peut pas être analysé
+        console.log(compteurConso.TYPE+" : ", compteurConso.SINSTS*1, "Pmax : ", decodePower(compteurConso.SMAXSN),"W" , decodeDate(compteurConso.SMAXSN), "Urms:",compteurConso.URMS1*1, "Umoy:",decodePower(compteurConso.UMOY1)*1, decodeDate(compteurConso.UMOY1));
     } else {
         try {
             // Keep best index value but show current Power
