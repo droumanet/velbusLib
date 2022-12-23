@@ -123,11 +123,11 @@ async function SQLgetEnergyInstant(addr, part) {
     let dayOffset = 1
     let dateToday = new Date()
     let dateBefore = new Date()
-    let d = dateToday.getTime() - 1000*60*60*24*dayOffset; // Offset by 1 day;
+    let d = dateToday.getTime() - 1000*60*60*24*dayOffset; // Offset by 0 day;
     dateBefore.setTime(d);
-    let dateOUT=dateToday.getFullYear()+"-"+(dateToday.getMonth()+1)+"-"+dateToday.getDate()
-    let dateIN=dateBefore.getFullYear()+"-"+(dateBefore.getMonth()+1)+"-"+dateBefore.getDate()
-
+    let dateOUT=dateToday.getFullYear()+"-"+(dateToday.getMonth()+1)+"-"+dateToday.getDate()+" 23:59:59"
+    let dateIN=dateBefore.getFullYear()+"-"+(dateBefore.getMonth()+1)+"-"+dateBefore.getDate()+" 00:00:00"
+    console.log("Statistiques : ", dateIN, dateOUT, "🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩")
     let sql =
     `SELECT dateRecord, PowerInst, PowerIndex
     FROM Energie

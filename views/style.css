@@ -41,6 +41,11 @@ a.nolink {
     color:darkgoldenrod;
 }
 
+#chart-wrapper {
+  display: inline-flexbox;
+  position: relative;
+  width: max-content;
+}
 /* Toggle dark or Light theme 
 :root {
     --darkBG: #232B32;

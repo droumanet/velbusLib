@@ -10,16 +10,30 @@ import * as myModel from '../models/DBModel.mjs'
 // Because there is no easiest way to convert a timestamp to a date
 function formatDate(milliseconds) {
   let d = new Date(milliseconds),
-  month = '' + (d.getMonth() + 1),
-  day = '' + d.getDate(),
-  year = d.getFullYear();
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
 
-  if (month.length < 2) 
-    month = '0' + month;
-  if (day.length < 2) 
-    day = '0' + day;
+      month=String(month).padStart(2,'0')
+      day  = String(day).padStart(2,'0')
 
   return [year, month, day].join('-');
+}
+
+function formatHour(milliseconds) {
+  let d = new Date(milliseconds),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear(),
+      hour = d.getHours(),
+      minut= d.getMinutes()
+
+  month=String(month).padStart(2,'0')
+  day  = String(day).padStart(2,'0')
+  hour = String(hour).padStart(2,'0')
+  minut= String(minut).padStart(2,'0')
+
+  return [year, month, day].join('-')+" "+hour+":"+minut;
 }
 
 async function viewGlobalEnergy(req, res) {
@@ -59,6 +73,11 @@ async function viewLocalEnergy(req, res) {
   res.render('statLocalEnergy', {"statistiques": data[0], "dataDay": dataDay, "dataPowerDay": dataPowerDay})
 }
 
+/**
+ * Return Instant power values to statLocalEnergyInst view
+ * @param {*} req ?addr=x&part=y
+ * @param {*} res 
+ */
 async function viewLocalEnergyInstant(req, res) {
   let addr = req.query.addr
   let part = req.query.part
@@ -70,7 +89,8 @@ async function viewLocalEnergyInstant(req, res) {
   let dataDay=[], dataPowerInst=[]
   console.log(data[0])
   data[0].forEach((pwrObj) => {
-    dataDay.push(formatDate(pwrObj.dateRecord))
+    //dataDay.push(formatDate(pwrObj.dateRecord))
+    dataDay.push(formatHour(pwrObj.dateRecord))
     dataPowerInst.push(pwrObj.PowerInst)
   })
   dataDay.shift()

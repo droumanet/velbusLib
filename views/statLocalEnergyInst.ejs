@@ -4,8 +4,8 @@
 <h1>Statistiques</h1>
 <h2>Compteurs instantanés</h2>
 
-<div style="height: 600px; min-width: 90%; max-width: 95%;">
-    <canvas id="power-chart"></canvas>
+<div class="#chart-wrapper">
+    <canvas id="power-chart" style="height:60vh; width:90vw"></canvas>
 </div>
 
 
@@ -22,17 +22,16 @@
                 fill: true,
                 pointStyle: false,
                 label: "Conso Instantanée",
-                backgroundColor: "#3e95cd",
-                stack: "stack0"
+                backgroundColor: "#3e95cd"
             }]
         },
         option: {
             scales: {
                 x: {
-                    stacked: true,
-                },
-                y: {
-                    stacked: true
+                    type: 'datetime',
+                    dateTimeLabelFormats: {
+                        day: '%b %H:%M:%S'
+                    },
                 }
             },
             responsive: true,
